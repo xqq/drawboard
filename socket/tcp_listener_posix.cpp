@@ -48,7 +48,7 @@ bool TcpListenerPosix::StartListen(std::string bind_addr, uint16_t port) {
         return false;
     }
 
-    if (listen(listen_fd_, 5) == -1) {
+    if (listen(listen_fd_, SOMAXCONN) == -1) {
         on_error_("listen() failed\n");
         return false;
     }
