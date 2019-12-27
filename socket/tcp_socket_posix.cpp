@@ -2,15 +2,20 @@
 // @author magicxqq <xqq@xqq.im>
 //
 
+#include <cstring>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#include "buffer.hpp"
 #include "tcp_socket_posix.hpp"
 
 TcpSocketPosix::~TcpSocketPosix() {
-
+    if (fd_ || thread_.joinable()) {
+        Shutdown();
+    }
 }
 
 void TcpSocketPosix::SetCallback(OnConnectedCallback on_connect,
@@ -42,6 +47,8 @@ bool TcpSocketPosix::Connect(std::string connect_addr, uint16_t port) {
         return false;
     }
 
+    on_connect_();
+
     thread_ = std::thread(&TcpSocketPosix::ThreadWorker, this);
 
     return true;
@@ -57,14 +64,46 @@ bool TcpSocketPosix::Send(const uint8_t* buffer, size_t length) {
 }
 
 bool TcpSocketPosix::Shutdown() {
-    int ret = shutdown(fd_, SHUT_RDWR);
-    if (ret == -1) {
-        on_error_("shutdown() returned with error");
+    if (fd_) {
+        int ret = shutdown(fd_, SHUT_RDWR);
+        if (ret == -1) {
+            on_error_("shutdown() returned with error");
+            fd_ = 0;
+        }
+    } else {
         return false;
     }
+
+    if (thread_.joinable()) {
+        thread_.join();
+    }
+
     return true;
 }
 
 void TcpSocketPosix::ThreadWorker() {
+    Buffer buffer(4096);
 
+    uint8_t buf[512];
+    memset(buf, 0, sizeof(buf));
+
+    while (true) {
+        ssize_t nread = recv(fd_, buf, sizeof(buf), 0);
+
+        if (nread == 0) {
+            close(fd_);
+            fd_ = 0;
+            on_disconnect_();
+            break;
+        } else if (nread == -1) {
+            close(fd_);
+            fd_ = 0;
+            on_error_("recv() returned with error");
+            break;
+        }
+
+        buffer.Write(buf, static_cast<size_t>(nread));
+        on_arrival_(&buffer, (size_t)nread);
+        memset(buf, 0, sizeof(buf));
+    }
 }
