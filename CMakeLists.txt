@@ -14,6 +14,7 @@ add_executable(drawboard
     client/client.cpp
     server/server.cpp
     socket/buffer.cpp
+    socket/tcp_listener.cpp
 )
 
 if(WIN32)
@@ -32,12 +33,17 @@ endif()
 
 target_include_directories(drawboard
     PRIVATE
-        socket
         ${SDL2_INCLUDE_DIRS}
 )
 
 target_link_libraries(drawboard
     PRIVATE
-        pthread
         ${SDL2_LIBRARIES}
 )
+
+if(WIN32)
+    target_link_libraries(drawboard
+        PRIVATE
+            Ws2_32
+    )
+endif()
