@@ -15,10 +15,12 @@ if(MINGW)
     ")
 endif()
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+
 add_executable(drawboard
     main.cpp
     client/client_app.cpp
-    server/server.cpp
+    server/server_app.cpp
     socket/buffer.cpp
     socket/tcp_listener.cpp
     socket/tcp_socket.cpp
