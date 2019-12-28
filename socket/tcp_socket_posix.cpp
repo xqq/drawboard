@@ -2,6 +2,7 @@
 // @author magicxqq <xqq@xqq.im>
 //
 
+#include <cassert>
 #include <cstring>
 #include <unistd.h>
 #include <sys/types.h>
@@ -11,6 +12,12 @@
 #include <netinet/tcp.h>
 #include "buffer.hpp"
 #include "tcp_socket_posix.hpp"
+
+TcpSocketPosix::TcpSocketPosix(int existing_fd, struct sockaddr_in remote_addr)
+        : fd_(existing_fd), remote_addr_(remote_addr),
+          on_connect_(nullptr), on_disconnect_(nullptr), on_arrival_(nullptr), on_error_(nullptr) {
+    // do nothing here, defer the thread creation until SetCallback()
+}
 
 TcpSocketPosix::~TcpSocketPosix() {
     if (fd_ || thread_.joinable()) {
@@ -26,9 +33,15 @@ void TcpSocketPosix::SetCallback(OnConnectedCallback on_connect,
     on_disconnect_ = on_disconnect;
     on_arrival_ = on_arrival;
     on_error_ = on_error;
+
+    if (fd_ && !thread_.joinable()) {
+        thread_ = std::thread(&TcpSocketPosix::ThreadWorker, this);
+    }
 }
 
 bool TcpSocketPosix::Connect(std::string connect_addr, uint16_t port) {
+    assert(fd_ == 0);
+
     fd_ = socket(AF_INET, SOCK_STREAM, 0);
 
     int enable = 1;
@@ -84,13 +97,13 @@ bool TcpSocketPosix::Shutdown() {
 void TcpSocketPosix::ThreadWorker() {
     Buffer buffer(4096);
 
-    uint8_t buf[512];
-    memset(buf, 0, sizeof(buf));
+    uint8_t buf[512] = {0};
 
     while (true) {
         ssize_t nread = recv(fd_, buf, sizeof(buf), 0);
 
         if (nread == 0) {
+            // connection closing
             close(fd_);
             fd_ = 0;
             on_disconnect_();

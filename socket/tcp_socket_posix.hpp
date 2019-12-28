@@ -11,10 +11,8 @@
 
 class TcpSocketPosix : public TcpSocket {
 public:
-    explicit TcpSocketPosix() = default;
-    explicit TcpSocketPosix(int existing_fd, struct sockaddr_in remote_addr)
-        : fd_(existing_fd), remote_addr_(remote_addr),
-          on_connect_(nullptr), on_disconnect_(nullptr), on_arrival_(nullptr), on_error_(nullptr) {}
+    TcpSocketPosix() = default;
+    TcpSocketPosix(int existing_fd, struct sockaddr_in remote_addr);
     virtual ~TcpSocketPosix() override;
     virtual void SetCallback(OnConnectedCallback on_connect,
                              OnDisconnectCallback on_disconnect,
