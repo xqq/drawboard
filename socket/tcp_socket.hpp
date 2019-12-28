@@ -20,6 +20,8 @@ public:
     using OnDataArrivalCallback = std::function<void(Buffer* buffer, size_t nread)>;
     using OnErrorCallback = std::function<void(std::string)>;
 public:
+    static TcpSocket* Create();
+public:
     explicit TcpSocket() = default;
     virtual ~TcpSocket() {}
     virtual void SetCallback(OnConnectedCallback on_connect,

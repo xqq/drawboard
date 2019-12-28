@@ -21,6 +21,7 @@ add_executable(drawboard
     server/server.cpp
     socket/buffer.cpp
     socket/tcp_listener.cpp
+    socket/tcp_socket.cpp
 )
 
 if(WIN32)
