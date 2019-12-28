@@ -31,18 +31,23 @@ TcpListenerWinsock::~TcpListenerWinsock() {
 bool TcpListenerWinsock::StartListen(std::string bind_addr, uint16_t port) {
     listen_socket_ = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (listen_socket_ == INVALID_SOCKET) {
-        on_error_("Create TCP Socket failed\n");
+        listen_socket_ = 0;
+        on_error_("Create TCP Socket failed");
         return false;
     }
 
     BOOL enable = 1;
     if (setsockopt(listen_socket_, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<char*>(&enable), sizeof(enable))) {
-        on_error_("setsockopt(TCP_NODELAY) failed\n");
+        on_error_("setsockopt(TCP_NODELAY) failed");
+        closesocket(listen_socket_);
+        listen_socket_ = 0;
         return false;
     }
 
     if (setsockopt(listen_socket_, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<char*>(&enable), sizeof(enable))) {
-        on_error_("setsockopt(SO_REUSEADDR) failed\n");
+        on_error_("setsockopt(SO_REUSEADDR) failed");
+        closesocket(listen_socket_);
+        listen_socket_ = 0;
         return false;
     }
 
@@ -58,13 +63,15 @@ bool TcpListenerWinsock::StartListen(std::string bind_addr, uint16_t port) {
     // Resolve the bind address and port to be used by the server
     int ret = getaddrinfo(bind_addr.c_str(), port_string.c_str(), &hints, &result);
     if (ret) {
-        on_error_("getaddrinfo failed");
+        on_error_("getaddrinfo() failed");
+        closesocket(listen_socket_);
+        listen_socket_ = 0;
         return false;
     }
 
-    ret = bind( listen_socket_, result->ai_addr, (int)result->ai_addrlen);
+    ret = bind(listen_socket_, result->ai_addr, (int)result->ai_addrlen);
     if (ret == SOCKET_ERROR) {
-        on_error_("bind failed with error");
+        on_error_("bind() failed with error");
         freeaddrinfo(result);
         closesocket(listen_socket_);
         listen_socket_ = 0;
@@ -115,10 +122,13 @@ void TcpListenerWinsock::ThreadWorker() {
 
     while (!shutdown_flag_) {
         SOCKET client_socket_ = accept(listen_socket_, reinterpret_cast<sockaddr*>(&incoming_addr), &incoming_addr_size);
-        if (client_socket_ == INVALID_SOCKET) {
+        if (shutdown_flag_) {
+            break;
+        } else if (client_socket_ == INVALID_SOCKET) {
             on_error_("accept failed");
             closesocket(listen_socket_);
             listen_socket_ = 0;
+            break;
         } else {
             // We got a valid socket
             auto socket = std::make_unique<TcpSocketWinsock>(client_socket_, incoming_addr);
