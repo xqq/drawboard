@@ -83,8 +83,6 @@ bool TcpSocketPosix::Shutdown() {
             on_error_("shutdown() returned with error");
             fd_ = 0;
         }
-    } else {
-        return false;
     }
 
     if (thread_.joinable()) {

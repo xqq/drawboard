@@ -67,8 +67,6 @@ bool TcpListenerPosix::EndListen() {
             on_error_("shutdown() returned with error");
             listen_fd_ = 0;
         }
-    } else {
-        return false;
     }
 
     if (thread_.joinable()) {
