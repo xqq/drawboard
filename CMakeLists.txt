@@ -17,7 +17,7 @@ endif()
 
 add_executable(drawboard
     main.cpp
-    client/client.cpp
+    client/client_app.cpp
     server/server.cpp
     socket/buffer.cpp
     socket/tcp_listener.cpp
@@ -47,6 +47,13 @@ target_link_libraries(drawboard
     PRIVATE
         ${SDL2_LIBRARIES}
 )
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_link_libraries(drawboard
+        PRIVATE
+            pthread
+    )
+endif ()
 
 if(WIN32)
     target_link_libraries(drawboard

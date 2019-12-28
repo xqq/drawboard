@@ -2,7 +2,10 @@
 // @author magicxqq <xqq@xqq.im>
 //
 
-int main(int argc, char* argv[]) {
+#include "client/client_app.hpp"
 
-    return 0;
+int main(int argc, char* argv[]) {
+    ClientApp client;
+
+    return client.Run();
 }
