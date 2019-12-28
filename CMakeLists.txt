@@ -27,6 +27,7 @@ add_executable(drawboard
 if(WIN32)
     target_sources(drawboard
         PRIVATE
+            DeclareDPIAware.manifest
             socket/tcp_listener_winsock.cpp
             socket/tcp_socket_winsock.cpp
     )
