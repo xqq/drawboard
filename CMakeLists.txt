@@ -43,21 +43,46 @@ target_include_directories(drawboard
         ${SDL2_INCLUDE_DIRS}
 )
 
-target_link_libraries(drawboard
-    PRIVATE
-        ${SDL2_LIBRARIES}
-)
+if(MSVC)
+    # SDL linkage for MSVC
+    target_link_libraries(drawboard
+        PRIVATE
+            SDL2::SDL2
+            SDL2::SDL2main
+    )
+elseif(MINGW)
+    # SDL linkage for MinGW: Enable full static link
+    target_link_libraries(drawboard
+        PRIVATE
+            -Wl,-Bstatic
+            ${SDL2_LIBRARIES}
+            -Wl,-Bdynamic
+    )
+else()
+    # SDL linkage for other platforms: dynamic link by default
+    target_link_libraries(drawboard
+        PRIVATE
+            ${SDL2_LIBRARIES}
+    )
+endif()
+
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # pthread is needed for gcc
     target_link_libraries(drawboard
         PRIVATE
             pthread
     )
-endif ()
+endif()
+
 
 if(WIN32)
     target_link_libraries(drawboard
         PRIVATE
+            Imm32
+            Winmm
+            Version
+            SetupAPI
             Ws2_32
     )
 endif()
