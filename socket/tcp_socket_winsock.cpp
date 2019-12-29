@@ -36,9 +36,9 @@ TcpSocketWinsock::~TcpSocketWinsock() {
 }
 
 void TcpSocketWinsock::SetCallback(OnConnectedCallback on_connect,
-                                  OnDisconnectCallback on_disconnect,
-                                  OnDataArrivalCallback on_arrival,
-                                  OnErrorCallback on_error) {
+                                   OnDisconnectCallback on_disconnect,
+                                   OnDataArrivalCallback on_arrival,
+                                   OnErrorCallback on_error) {
     on_connect_ = on_connect;
     on_disconnect_ = on_disconnect;
     on_arrival_ = on_arrival;
@@ -92,7 +92,7 @@ bool TcpSocketWinsock::Connect(std::string connect_addr, uint16_t port) {
 }
 
 bool TcpSocketWinsock::Send(const uint8_t* buffer, size_t length) {
-    int ret = send(socket_, reinterpret_cast<const char*>(buffer), length, 0);
+    int ret = send(socket_, reinterpret_cast<const char*>(buffer), static_cast<int>(length), 0);
     if (ret == SOCKET_ERROR) {
         on_error_("send() returned with error");
         return false;
