@@ -10,6 +10,9 @@
 class ClientApp {
 public:
     int Run();
+private:
+    SDL_Window* window = nullptr;
+    SDL_Surface* screen = nullptr;
 };
 
 
