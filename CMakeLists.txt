@@ -30,6 +30,7 @@ add_executable(drawboard
     socket/buffer.cpp
     socket/tcp_listener.cpp
     socket/tcp_socket.cpp
+    common/abstract_canvas.cpp
     common/log.cpp
 )
 
