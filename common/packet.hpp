@@ -8,29 +8,12 @@
 #include <cstdint>
 #include <cstddef>
 #include <memory>
+#include <functional>
 
 class Buffer;
+struct Packet;
 
-enum PacketType {
-    kFullImage = 1,
-    kStartDraw,
-    kEndDraw,
-    kDrawPoints,
-    kUserEnter,
-    kUserLeave,
-};
-
-struct PacketHeader {
-    uint16_t packet_type;
-    uint16_t payload_length;
-};
-
-struct Packet {
-    PacketHeader header;
-    std::unique_ptr<uint8_t[]> payload;
-};
-
-using PacketCallback =  void(*)(Packet* packet);
+using PacketCallback = std::function<void(const Packet* packet)>;
 
 size_t ParseBuffer(Buffer* buffer, PacketCallback callback);
 
