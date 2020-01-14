@@ -36,6 +36,7 @@ add_executable(drawboard
     common/abstract_canvas.cpp
     common/log.cpp
     common/packet.cpp
+    common/threaded_worker.cpp
 )
 
 if(WIN32)
