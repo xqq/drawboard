@@ -1,0 +1,57 @@
+namespace Drawboard;
+
+enum PacketType:uint16 {
+    FullImage = 1,
+    StartDraw,
+    EndDraw,
+    DrawPoints,
+    DeleteBatch,
+    UserEnter,
+    UserLeave,
+}
+
+struct Vec2 {
+    x: int16;
+    y: int16;
+}
+
+table DrawBatch {
+    uid: uint32;
+    sequence_id: uint32;
+    color: uint32;
+    points: [Vec2];
+}
+
+table FullImagePayload {
+    batches: [DrawBatch];
+}
+
+table StartDrawPayload {
+    uid: uint32;
+    color: uint32;
+    sequence_id: uint32;
+}
+
+table EndDrawPayload {
+    uid: uint32;
+}
+
+table DrawPointsPayload {
+    uid: uint32;
+    sequence_id: uint32;
+    points: [Vec2];
+}
+
+table DeleteBatchPayload {
+    uid: uint32;
+    sequence_id: uint32;
+}
+
+table UserEnterPayload {
+    uid: uint32;
+    color: uint32;
+}
+
+table UserLeavePayload {
+    uid: uint32;
+}
