@@ -10,9 +10,9 @@ void AbstractCanvas::BeginDraw(uint32_t uid, uint32_t sequence_id, uint32_t colo
     Log::Info("BeginDraw");
     std::lock_guard<std::mutex> lock(mutex_);
 
-    auto target_user = point_table_.find(uid);
-    if (target_user == point_table_.end()) {
-        target_user = point_table_.insert({uid, std::unordered_map<uint32_t, BatchInfo>()}).first;
+    auto target_user = point_map_.find(uid);
+    if (target_user == point_map_.end()) {
+        target_user = point_map_.insert({uid, std::unordered_map<uint32_t, BatchInfo>()}).first;
     }
 
     BatchInfo batch_info(color);
@@ -25,8 +25,8 @@ void AbstractCanvas::EndDraw(uint32_t uid, uint32_t sequence_id) {
 
 void AbstractCanvas::DrawPoint(uint32_t uid, uint32_t sequence_id, Point point) {
     Log::InfoF("DrawPoint: uid = %d, sequence_id = %d, x = %d, y = %d\n", uid, sequence_id, point.x, point.y);
-    auto target_user = point_table_.find(uid);
-    if (target_user == point_table_.end()) {
+    auto target_user = point_map_.find(uid);
+    if (target_user == point_map_.end()) {
         return;
     }
 
@@ -41,8 +41,8 @@ void AbstractCanvas::DrawPoint(uint32_t uid, uint32_t sequence_id, Point point) 
 
 void AbstractCanvas::DrawPoints(uint32_t uid, uint32_t sequence_id, const std::vector<Point>& points) {
     Log::InfoF("DrawPoints: uid = %d, sequence_id = %d, size = %ul\n", uid, sequence_id, points.size());
-    auto target_user = point_table_.find(uid);
-    if (target_user == point_table_.end()) {
+    auto target_user = point_map_.find(uid);
+    if (target_user == point_map_.end()) {
         return;
     }
 
@@ -57,8 +57,8 @@ void AbstractCanvas::DrawPoints(uint32_t uid, uint32_t sequence_id, const std::v
 }
 
 void AbstractCanvas::ClearBatch(uint32_t uid, uint32_t sequence_id) {
-    auto target_user = point_table_.find(uid);
-    if (target_user == point_table_.end()) {
+    auto target_user = point_map_.find(uid);
+    if (target_user == point_map_.end()) {
         return;
     }
 
@@ -88,7 +88,7 @@ void AbstractCanvas::Render(int width, int height) {
         ClearPixelBuffer();
     }
 
-    for (auto& user_pair : point_table_) {
+    for (auto& user_pair : point_map_) {
         for (auto& batch_pair : user_pair.second) {
             BatchInfo* batch_info = &batch_pair.second;
             if (batch_info->points.empty()) {
@@ -158,4 +158,8 @@ void AbstractCanvas::ClearPixelBuffer() {
 
 const char* AbstractCanvas::GetPixelBuffer() {
     return reinterpret_cast<const char*>(&pixel_buffer_[0]);
+}
+
+const PointMap* AbstractCanvas::GetMap() {
+    return &point_map_;
 }

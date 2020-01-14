@@ -24,6 +24,8 @@ struct BatchInfo {
     explicit BatchInfo(uint32_t _color) : color(_color) {}
 };
 
+using PointMap = std::unordered_map<uint32_t, std::unordered_map<uint32_t, BatchInfo>>;
+
 class AbstractCanvas {
 public:
     AbstractCanvas() : is_bitmap_valid_(false) {}
@@ -36,6 +38,7 @@ public:
     void InitPixelBuffer(int width, int height);
     void ClearPixelBuffer();
     const char* GetPixelBuffer();
+    const PointMap* GetMap();
 private:
     void RenderPoint(Point p, uint32_t color);
     void RenderLine(Point p1, Point p2, uint32_t color);
@@ -46,7 +49,7 @@ private:
     std::vector<uint32_t> pixel_buffer_;
     bool is_bitmap_valid_;
     // uid -> sequence_id -> point_batch
-    std::unordered_map<uint32_t, std::unordered_map<uint32_t, BatchInfo>> point_table_;
+    PointMap point_map_;
 };
 
 
