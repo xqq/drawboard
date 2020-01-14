@@ -30,6 +30,7 @@ add_executable(drawboard
     socket/buffer.cpp
     socket/tcp_listener.cpp
     socket/tcp_socket.cpp
+    common/log.cpp
 )
 
 if(WIN32)
