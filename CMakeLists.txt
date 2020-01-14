@@ -15,6 +15,11 @@ if(MINGW)
     ")
 endif()
 
+add_subdirectory(thirdparty/flatbuffers
+    ${CMAKE_CURRENT_BINARY_DIR}/flatbuffers-build
+    EXCLUDE_FROM_ALL
+)
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_executable(drawboard
@@ -44,6 +49,12 @@ endif()
 target_include_directories(drawboard
     PRIVATE
         ${SDL2_INCLUDE_DIRS}
+)
+
+# The flatbuffers target carry header search path automatically if CMake > 2.8.11.
+target_link_libraries(drawboard
+    PRIVATE
+        flatbuffers
 )
 
 if(MSVC)
