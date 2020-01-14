@@ -1,5 +1,5 @@
 //
-// Created by zhengqian on 2020/01/14.
+// Created by magicxqq on 2020/01/14.
 //
 
 #ifndef DRAWBOARD_DRAW_CLIENT_HPP
@@ -30,7 +30,7 @@ public:
 private:
     void onSocketConnected();
     void onSocketDisconnected();
-    void onSocketDataArrival(ReadWriteBuffer* buffer, size_t nread);
+    void onSocketDataArrival(ReadWriteBuffer* buffer, size_t nread, TcpSocket* socket, void* user_data);
     void onSocketError(std::string message);
     void onPacketCallback(const Packet* packet);
 private:

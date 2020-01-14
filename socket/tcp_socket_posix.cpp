@@ -114,7 +114,7 @@ void TcpSocketPosix::ThreadWorker() {
         }
 
         buffer.Write(buf, static_cast<size_t>(nread));
-        on_arrival_(&buffer, (size_t)nread);
+        on_arrival_(&buffer, (size_t)nread, this, this->TcpSocket::user_data_);
         memset(buf, 0, sizeof(buf));
     }
 }

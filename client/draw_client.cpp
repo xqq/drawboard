@@ -1,5 +1,5 @@
 //
-// Created by zhengqian on 2020/01/14.
+// Created by magicxqq on 2020/01/14.
 //
 
 #include "common/log.hpp"
@@ -13,7 +13,7 @@ DrawClient::DrawClient() : socket_connected_(false), uid_(0), color_(0), sequenc
     socket_.reset(TcpSocket::Create());
     socket_->SetCallback(std::bind(&DrawClient::onSocketConnected, this),
                          std::bind(&DrawClient::onSocketDisconnected, this),
-                         std::bind(&DrawClient::onSocketDataArrival, this, _1, _2),
+                         std::bind(&DrawClient::onSocketDataArrival, this, _1, _2, _3, _4),
                          std::bind(&DrawClient::onSocketError, this, _1));
 }
 
@@ -114,7 +114,7 @@ void DrawClient::onSocketDisconnected() {
     socket_connected_ = false;
 }
 
-void DrawClient::onSocketDataArrival(ReadWriteBuffer *buffer, size_t nread) {
+void DrawClient::onSocketDataArrival(ReadWriteBuffer *buffer, size_t nread, TcpSocket* socket, void* user_data) {
     ParseBuffer(buffer, std::bind(&DrawClient::onPacketCallback, this, _1));
 }
 
