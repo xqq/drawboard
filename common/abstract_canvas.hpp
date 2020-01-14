@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <vector>
 #include <unordered_map>
+#include <mutex>
 
 struct Point {
     int x;
@@ -25,22 +26,20 @@ struct BatchInfo {
 
 class AbstractCanvas {
 public:
-
     AbstractCanvas() : is_bitmap_valid_(false) {}
-    uint32_t BeginDraw(uint32_t uid, uint32_t sequence_id, uint32_t color);
+    void BeginDraw(uint32_t uid, uint32_t sequence_id, uint32_t color);
     void EndDraw(uint32_t uid, uint32_t sequence_id);
     void DrawPoint(uint32_t uid, uint32_t sequence_id, Point point);
     void ClearBatch(uint32_t uid, uint32_t sequence_id);
     void Render(int width, int height);
     void InitPixelBuffer(int width, int height);
+    void ClearPixelBuffer();
     const char* GetPixelBuffer();
-
 private:
-
     void RenderPoint(Point p, uint32_t color);
     void RenderLine(Point p1, Point p2, uint32_t color);
-
 private:
+    std::mutex mutex_;
     int viewport_width_;
     int viewport_height_;
     std::vector<uint32_t> pixel_buffer_;

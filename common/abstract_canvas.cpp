@@ -6,8 +6,10 @@
 #include "log.hpp"
 #include "abstract_canvas.hpp"
 
-uint32_t AbstractCanvas::BeginDraw(uint32_t uid, uint32_t sequence_id, uint32_t color) {
+void AbstractCanvas::BeginDraw(uint32_t uid, uint32_t sequence_id, uint32_t color) {
     Log::Info("BeginDraw");
+    std::lock_guard<std::mutex> lock(mutex_);
+
     auto target_user = point_table_.find(uid);
     if (target_user == point_table_.end()) {
         target_user = point_table_.insert({uid, std::unordered_map<uint32_t, BatchInfo>()}).first;
@@ -15,7 +17,6 @@ uint32_t AbstractCanvas::BeginDraw(uint32_t uid, uint32_t sequence_id, uint32_t 
 
     BatchInfo batch_info(color);
     target_user->second.insert({sequence_id, batch_info});
-    return 0;
 }
 
 void AbstractCanvas::EndDraw(uint32_t uid, uint32_t sequence_id) {
@@ -26,13 +27,11 @@ void AbstractCanvas::DrawPoint(uint32_t uid, uint32_t sequence_id, Point point) 
     Log::InfoF("DrawPoint: uid = %d, sequence_id = %d, x = %d, y = %d\n", uid, sequence_id, point.x, point.y);
     auto target_user = point_table_.find(uid);
     if (target_user == point_table_.end()) {
-        Log::Info("return1");
         return;
     }
 
     auto target_batch = target_user->second.find(sequence_id);
     if (target_batch == target_user->second.end()) {
-        Log::Info("return2");
         return;
     }
 
@@ -62,6 +61,8 @@ void AbstractCanvas::Render(int width, int height) {
     if (pixel_buffer_.size() != target_size) {
         pixel_buffer_.resize(target_size);
         InitPixelBuffer(width, height);
+    } else {
+        ClearPixelBuffer();
     }
 
     for (auto& user_pair : point_table_) {
@@ -73,6 +74,7 @@ void AbstractCanvas::Render(int width, int height) {
 
             Point prev_point = batch_info->points[0];
             RenderPoint(prev_point, batch_info->color);
+
             for (size_t i = 1; i < batch_info->points.size(); i++) {
                 Point current_point = batch_info->points[i];
                 RenderLine(prev_point, current_point, batch_info->color);
@@ -90,7 +92,7 @@ void AbstractCanvas::RenderPoint(Point p, uint32_t color) {
 }
 
 void AbstractCanvas::RenderLine(Point p1, Point p2, uint32_t color){
-    Log::InfoF("RenderLine: x1 = %d, y1 = %d, x2 = %d, y2 = %d, color = %d\n", p1.x, p1.y, p2.x, p2.y, color);
+    // Log::InfoF("RenderLine: x1 = %d, y1 = %d, x2 = %d, y2 = %d, color = %d\n", p1.x, p1.y, p2.x, p2.y, color);
     bool steep = std::abs(p2.y - p1.y) > std::abs(p2.x - p1.x);
     if (steep) {
         std::swap(p1.x, p1.y);
@@ -121,8 +123,14 @@ void AbstractCanvas::RenderLine(Point p1, Point p2, uint32_t color){
 
 void AbstractCanvas::InitPixelBuffer(int width, int height) {
     Log::InfoF("InitPixelBuffer: width = %d, height = %d\n", width, height);
+    viewport_width_ = width;
+    viewport_height_ = height;
     pixel_buffer_.resize(width * height);
-    memset(reinterpret_cast<void*>(&pixel_buffer_[0]), 255, sizeof(uint32_t) * width * height);
+    ClearPixelBuffer();
+}
+
+void AbstractCanvas::ClearPixelBuffer() {
+    memset(reinterpret_cast<void*>(&pixel_buffer_[0]), 255, sizeof(uint32_t) * viewport_width_ * viewport_height_);
 }
 
 const char* AbstractCanvas::GetPixelBuffer() {
