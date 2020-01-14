@@ -1,13 +1,33 @@
-namespace Drawboard;
-
-enum PacketType:uint16 {
-    FullImage = 1,
+enum PacketType: uint16 {
+    ServerHello = 0,
+    FullImage,
     StartDraw,
     EndDraw,
     DrawPoints,
     DeleteBatch,
     UserEnter,
-    UserLeave,
+    UserLeave
+}
+
+struct PacketHeader {
+    packet_type: PacketType;
+    payload_length: uint16;
+}
+
+union Payload {
+    ServerHelloPayload,
+    FullImagePayload,
+    StartDrawPayload,
+    EndDrawPayload,
+    DrawPointsPayload,
+    DeleteBatchPayload,
+    UserEnterPayload,
+    UserLeavePayload
+}
+
+table Packet {
+    header: PacketHeader;
+    payload: Payload;
 }
 
 struct Vec2 {
@@ -22,18 +42,24 @@ table DrawBatch {
     points: [Vec2];
 }
 
+table ServerHelloPayload {
+    uid: uint32;
+    color: uint32;
+}
+
 table FullImagePayload {
     batches: [DrawBatch];
 }
 
 table StartDrawPayload {
     uid: uint32;
-    color: uint32;
     sequence_id: uint32;
+    color: uint32;
 }
 
 table EndDrawPayload {
     uid: uint32;
+    sequence_id: uint32;
 }
 
 table DrawPointsPayload {
@@ -55,3 +81,5 @@ table UserEnterPayload {
 table UserLeavePayload {
     uid: uint32;
 }
+
+root_type Packet;
