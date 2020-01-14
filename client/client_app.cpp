@@ -14,20 +14,20 @@ int ClientApp::Run() {
         return 1;
     }
 
-    window = SDL_CreateWindow("Drawboard", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_SHOWN);
-    if (window == nullptr) {
+    window_ = SDL_CreateWindow("Drawboard", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_SHOWN);
+    if (window_ == nullptr) {
         std::cout << SDL_GetError() << std::endl;
         return 1;
     }
 
     SDL_Renderer *renderer = nullptr;
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    renderer = SDL_CreateRenderer(window_, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if (renderer == nullptr){
         std::cout << SDL_GetError() << std::endl;
         return 1;
     }
 
-    texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 1280, 720);
+    texture_ = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 1280, 720);
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 
     bool left_mouse_down = false;
@@ -50,9 +50,11 @@ int ClientApp::Run() {
                     break;
                 case SDL_MOUSEBUTTONDOWN:
                     if (event.button.button == SDL_BUTTON_LEFT) {
-                        sequence_id++;
-                        canvas_.BeginDraw(0, sequence_id, 0);
-                        left_mouse_down = true;
+                        if (!left_mouse_down) {
+                            sequence_id++;
+                            canvas_.BeginDraw(0, sequence_id, 0);
+                            left_mouse_down = true;
+                        }
                     }
                 case SDL_MOUSEMOTION:
                     if (left_mouse_down) {
@@ -66,16 +68,16 @@ int ClientApp::Run() {
 
         canvas_.Render(1280, 720);
 
-        SDL_UpdateTexture(texture, NULL, canvas_.GetPixelBuffer(), 1280 * sizeof(uint32_t));
+        SDL_UpdateTexture(texture_, NULL, canvas_.GetPixelBuffer(), 1280 * sizeof(uint32_t));
 
         SDL_RenderClear(renderer);
-        SDL_RenderCopy(renderer, texture, NULL, NULL);
+        SDL_RenderCopy(renderer, texture_, NULL, NULL);
         SDL_RenderPresent(renderer);
     }
 
-    SDL_DestroyTexture(texture);
+    SDL_DestroyTexture(texture_);
     SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
+    SDL_DestroyWindow(window_);
     SDL_Quit();
     return 0;
 }
