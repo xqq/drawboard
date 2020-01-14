@@ -6,6 +6,7 @@
 #define DRAWBOARD_DRAW_CLIENT_HPP
 
 #include <cstdint>
+#include <memory>
 #include <functional>
 #include "common/abstract_canvas.hpp"
 #include "socket/read_write_buffer.hpp"
@@ -34,7 +35,7 @@ private:
     void onPacketCallback(const Packet* packet);
 private:
     AbstractCanvas canvas_;
-    TcpSocket* socket_;
+    std::unique_ptr<TcpSocket> socket_;
     bool socket_connected_;
     uint32_t uid_;
     uint32_t color_;

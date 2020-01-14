@@ -9,8 +9,8 @@
 
 using namespace std::placeholders;
 
-DrawClient::DrawClient() : socket_(nullptr), socket_connected_(false), uid_(0), color_(0), sequence_id_(-1) {
-    socket_ = TcpSocket::Create();
+DrawClient::DrawClient() : socket_connected_(false), uid_(0), color_(0), sequence_id_(-1) {
+    socket_.reset(TcpSocket::Create());
     socket_->SetCallback(std::bind(&DrawClient::onSocketConnected, this),
                          std::bind(&DrawClient::onSocketDisconnected, this),
                          std::bind(&DrawClient::onSocketDataArrival, this, _1, _2),
@@ -21,8 +21,6 @@ DrawClient::~DrawClient() {
     if (socket_connected_) {
         Logout();
     }
-    delete socket_;
-    socket_ = nullptr;
 }
 
 void DrawClient::Login(std::string host, uint16_t port) {
@@ -121,7 +119,7 @@ void DrawClient::onSocketDataArrival(ReadWriteBuffer *buffer, size_t nread) {
 }
 
 void DrawClient::onSocketError(std::string message) {
-    Log::InfoF("onSocketError: %s\n", message.c_str());
+    Log::ErrorF("onSocketError: %s\n", message.c_str());
     socket_connected_ = false;
 }
 
@@ -134,7 +132,19 @@ void DrawClient::onPacketCallback(const Packet* packet) {
             break;
         case PacketType_FullImage: {
             auto payload = packet->payload_as<FullImagePayload>();
-            // TODO
+            auto batches = payload->batches();
+
+            for (auto draw_batch : *batches) {
+                auto points_vector = draw_batch->points();
+                if (points_vector->size() == 0) {
+                    continue;
+                }
+                std::vector<Point> points(points_vector->size());
+                memcpy(points.data(), points_vector->data(), sizeof(Vec2) * points_vector->size());
+                canvas_.BeginDraw(draw_batch->uid(), draw_batch->sequence_id(), draw_batch->color());
+                canvas_.DrawPoints(draw_batch->uid(), draw_batch->sequence_id(), points);
+                canvas_.EndDraw(draw_batch->uid(), draw_batch->sequence_id());
+            }
             break;
         }
         case PacketType_StartDraw: {
@@ -149,14 +159,18 @@ void DrawClient::onPacketCallback(const Packet* packet) {
         }
         case PacketType_DrawPoints: {
             auto payload = packet->payload_as<DrawPointsPayload>();
-            auto points = payload->points();
-            for (auto iter = points->cbegin(); iter != points->cend(); ++iter) {
-                canvas_.DrawPoint(payload->uid(), payload->sequence_id(), Point(iter->x(), iter->y()));
+            auto points_vector = payload->points();
+            if (points_vector->size() == 0) {
+                break;
             }
+            std::vector<Point> points(points_vector->size());
+            memcpy(points.data(), points_vector->data(), sizeof(Vec2) * points_vector->size());
+            canvas_.DrawPoints(payload->uid(), payload->sequence_id(), points);
             break;
         }
         case PacketType_DeleteBatch: {
-            // TODO
+            auto payload = packet->payload_as<DeleteBatchPayload>();
+            canvas_.ClearBatch(payload->uid(), payload->sequence_id());
             break;
         }
         case PacketType_UserEnter: {
