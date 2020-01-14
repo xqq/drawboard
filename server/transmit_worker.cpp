@@ -21,8 +21,8 @@ void TransmitWorker::Run() {
         if (msg == TaskType::kPrivateSend) {
             msg.socket->Send(msg.buffer.data(), msg.buffer.size());
         } else if (msg == TaskType::kBroadcastSend) {
-            for (auto iter : *socket_cluster_) {
-                TcpSocket* socket = iter.second;
+            for (auto& iter : *socket_cluster_) {
+                TcpSocket* socket = iter.second.get();
                 socket->Send(msg.buffer.data(), msg.buffer.size());
             }
         }

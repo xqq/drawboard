@@ -11,7 +11,8 @@
 #include "socket/tcp_socket.hpp"
 #include "task.hpp"
 
-using SocketCluster = std::unordered_map<uint32_t, TcpSocket*>;
+// uid -> TcpSocket*
+using SocketCluster = std::unordered_map<uint32_t, std::unique_ptr<TcpSocket>>;
 
 class TransmitWorker : public ThreadedWorker {
 public:
