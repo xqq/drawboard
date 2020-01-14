@@ -9,7 +9,7 @@
 #include <memory>
 #include <cstdint>
 #include <functional>
-#include "noncopyable.hpp"
+#include "common/noncopyable.hpp"
 
 struct sockaddr_in;
 

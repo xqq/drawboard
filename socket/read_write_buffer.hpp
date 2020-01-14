@@ -7,7 +7,7 @@
 
 #include <cstddef>
 #include <cstdint>
-#include "noncopyable.hpp"
+#include "common/noncopyable.hpp"
 
 class ReadWriteBuffer {
 public:
