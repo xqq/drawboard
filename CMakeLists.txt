@@ -26,6 +26,7 @@ add_executable(drawboard
     main.cpp
     client/client_app.cpp
     server/server_app.cpp
+    common/packet.cpp
     socket/buffer.cpp
     socket/tcp_listener.cpp
     socket/tcp_socket.cpp
