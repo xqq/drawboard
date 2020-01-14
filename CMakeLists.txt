@@ -20,18 +20,22 @@ add_subdirectory(thirdparty/flatbuffers
     EXCLUDE_FROM_ALL
 )
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
 
 add_executable(drawboard
     main.cpp
     client/client_app.cpp
+    client/draw_client.cpp
     server/server_app.cpp
-    common/packet.cpp
     socket/buffer.cpp
     socket/tcp_listener.cpp
     socket/tcp_socket.cpp
     common/abstract_canvas.cpp
     common/log.cpp
+    common/packet.cpp
 )
 
 if(WIN32)
