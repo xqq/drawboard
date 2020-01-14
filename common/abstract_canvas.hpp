@@ -12,10 +12,10 @@
 #include <mutex>
 
 struct Point {
-    int x;
-    int y;
+    int16_t x;
+    int16_t y;
     Point() : x(0), y(0) {}
-    Point(int _x, int _y) : x(_x), y(_y) {}
+    Point(int16_t _x, int16_t _y) : x(_x), y(_y) {}
 };
 
 struct BatchInfo {
@@ -30,6 +30,7 @@ public:
     void BeginDraw(uint32_t uid, uint32_t sequence_id, uint32_t color);
     void EndDraw(uint32_t uid, uint32_t sequence_id);
     void DrawPoint(uint32_t uid, uint32_t sequence_id, Point point);
+    void DrawPoints(uint32_t uid, uint32_t sequence_id, const std::vector<Point>& points);
     void ClearBatch(uint32_t uid, uint32_t sequence_id);
     void Render(int width, int height);
     void InitPixelBuffer(int width, int height);

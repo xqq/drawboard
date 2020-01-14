@@ -39,13 +39,36 @@ void AbstractCanvas::DrawPoint(uint32_t uid, uint32_t sequence_id, Point point) 
     is_bitmap_valid_ = false;
 }
 
-void AbstractCanvas::ClearBatch(uint32_t uid, uint32_t sequence_id) {
-    auto target_user = &point_table_.find(uid)->second;
-    auto iter = target_user->find(sequence_id);
-    if (iter != target_user->end()) {
-        target_user->erase(iter);
-        is_bitmap_valid_ = false;
+void AbstractCanvas::DrawPoints(uint32_t uid, uint32_t sequence_id, const std::vector<Point>& points) {
+    Log::InfoF("DrawPoints: uid = %d, sequence_id = %d, size = %ul\n", uid, sequence_id, points.size());
+    auto target_user = point_table_.find(uid);
+    if (target_user == point_table_.end()) {
+        return;
     }
+
+    auto target_batch = target_user->second.find(sequence_id);
+    if (target_batch == target_user->second.end()) {
+        return;
+    }
+
+    std::vector<Point>& batch = target_batch->second.points;
+    batch.insert(batch.end(), points.cbegin(), points.cend());
+    is_bitmap_valid_ = false;
+}
+
+void AbstractCanvas::ClearBatch(uint32_t uid, uint32_t sequence_id) {
+    auto target_user = point_table_.find(uid);
+    if (target_user == point_table_.end()) {
+        return;
+    }
+
+    auto target_batch = target_user->second.find(sequence_id);
+    if (target_batch == target_user->second.end()) {
+        return;
+    }
+
+    target_user->second.erase(target_batch);
+    is_bitmap_valid_ = false;
 }
 
 void AbstractCanvas::Render(int width, int height) {
