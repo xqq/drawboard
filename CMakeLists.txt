@@ -30,7 +30,7 @@ add_executable(drawboard
     client/client_app.cpp
     client/draw_client.cpp
     server/server_app.cpp
-    socket/buffer.cpp
+    socket/read_write_buffer.cpp
     socket/tcp_listener.cpp
     socket/tcp_socket.cpp
     common/abstract_canvas.cpp

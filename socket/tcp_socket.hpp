@@ -11,13 +11,13 @@
 
 struct sockaddr_in;
 
-class Buffer;
+class ReadWriteBuffer;
 
 class TcpSocket : public Noncopyable {
 public:
     using OnConnectedCallback = std::function<void()>;
     using OnDisconnectCallback = std::function<void()>;
-    using OnDataArrivalCallback = std::function<void(Buffer* buffer, size_t nread)>;
+    using OnDataArrivalCallback = std::function<void(ReadWriteBuffer* buffer, size_t nread)>;
     using OnErrorCallback = std::function<void(std::string)>;
 public:
     static TcpSocket* Create();

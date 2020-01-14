@@ -2,17 +2,17 @@
 // @author magicxqq <xqq@xqq.im>
 //
 
-#ifndef DRAWBOARD_BUFFER_HPP
-#define DRAWBOARD_BUFFER_HPP
+#ifndef DRAWBOARD_READ_WRITE_BUFFER_HPP
+#define DRAWBOARD_READ_WRITE_BUFFER_HPP
 
 #include <cstddef>
 #include <cstdint>
 #include "noncopyable.hpp"
 
-class Buffer {
+class ReadWriteBuffer {
 public:
-    explicit Buffer(size_t size);
-    ~Buffer();
+    explicit ReadWriteBuffer(size_t size);
+    ~ReadWriteBuffer();
     bool Read(uint8_t* out_buf, size_t length);
     bool Write(const uint8_t* buf, size_t length);
     size_t GetReadableLength();
@@ -23,8 +23,8 @@ private:
     uint8_t* write_pointer_;
     uint8_t* end_pointer_;
 private:
-    DISALLOW_COPY_AND_ASSIGN(Buffer);
+    DISALLOW_COPY_AND_ASSIGN(ReadWriteBuffer);
 };
 
 
-#endif // DRAWBOARD_BUFFER_HPP
+#endif //DRAWBOARD_READ_WRITE_BUFFER_HPP

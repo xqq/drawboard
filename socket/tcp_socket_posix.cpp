@@ -10,7 +10,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#include "buffer.hpp"
+#include "read_write_buffer.hpp"
 #include "tcp_socket_posix.hpp"
 
 TcpSocketPosix::TcpSocketPosix(int existing_fd, struct sockaddr_in remote_addr)
@@ -93,7 +93,7 @@ bool TcpSocketPosix::Shutdown() {
 }
 
 void TcpSocketPosix::ThreadWorker() {
-    Buffer buffer(4096);
+    ReadWriteBuffer buffer(4096);
 
     uint8_t buf[512] = {0};
 

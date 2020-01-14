@@ -10,12 +10,12 @@
 #include <memory>
 #include <functional>
 
-class Buffer;
+class ReadWriteBuffer;
 struct Packet;
 
 using PacketCallback = std::function<void(const Packet* packet)>;
 
-size_t ParseBuffer(Buffer* buffer, PacketCallback callback);
+size_t ParseBuffer(ReadWriteBuffer* buffer, PacketCallback callback);
 
 
 #endif //DRAWBOARD_PACKET_HPP

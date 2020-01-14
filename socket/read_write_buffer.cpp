@@ -5,9 +5,9 @@
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
-#include "buffer.hpp"
+#include "read_write_buffer.hpp"
 
-Buffer::Buffer(size_t size) {
+ReadWriteBuffer::ReadWriteBuffer(size_t size) {
     size_ = size;
     buffer_ = reinterpret_cast<uint8_t*>(malloc(size));
     memset(buffer_, 0, size);
@@ -16,11 +16,11 @@ Buffer::Buffer(size_t size) {
     end_pointer_ = buffer_ + size;
 }
 
-Buffer::~Buffer() {
+ReadWriteBuffer::~ReadWriteBuffer() {
     free(buffer_);
 }
 
-bool Buffer::Read(uint8_t* out_buf, size_t length) {
+bool ReadWriteBuffer::Read(uint8_t* out_buf, size_t length) {
     if (length > GetReadableLength()) {
         return false;
     }
@@ -30,11 +30,11 @@ bool Buffer::Read(uint8_t* out_buf, size_t length) {
     return true;
 }
 
-bool Buffer::Write(const uint8_t* buf, size_t length) {
+bool ReadWriteBuffer::Write(const uint8_t* buf, size_t length) {
     size_t remain = end_pointer_ - write_pointer_;
 
     if (length > size_) {
-        fprintf(stderr, "Buffer::Write(): space not enough for %zu bytes", length);
+        fprintf(stderr, "ReadWriteBuffer::Write(): space not enough for %zu bytes", length);
         return false;
     } else if (length > remain) {  // if space is not enough
         // move existing data to the front of buffer
@@ -49,7 +49,7 @@ bool Buffer::Write(const uint8_t* buf, size_t length) {
     return true;
 }
 
-size_t Buffer::GetReadableLength() {
+size_t ReadWriteBuffer::GetReadableLength() {
     ptrdiff_t diff = write_pointer_ - read_pointer_;
     return (size_t)diff;
 }

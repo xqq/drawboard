@@ -2,11 +2,11 @@
 // @author magicxqq <xqq@xqq.im>
 //
 
-#include "socket/buffer.hpp"
+#include "socket/read_write_buffer.hpp"
 #include "protocol/protocol_generated.h"
 #include "packet.hpp"
 
-size_t ParseBuffer(Buffer* buffer, PacketCallback callback) {
+size_t ParseBuffer(ReadWriteBuffer* buffer, PacketCallback callback) {
     size_t packet_count = 0;
     size_t readable = buffer->GetReadableLength();
 

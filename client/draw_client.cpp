@@ -116,7 +116,7 @@ void DrawClient::onSocketDisconnected() {
     socket_connected_ = false;
 }
 
-void DrawClient::onSocketDataArrival(Buffer *buffer, size_t nread) {
+void DrawClient::onSocketDataArrival(ReadWriteBuffer *buffer, size_t nread) {
     ParseBuffer(buffer, std::bind(&DrawClient::onPacketCallback, this, _1));
 }
 

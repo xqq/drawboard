@@ -7,7 +7,7 @@
 #include <Windows.h>
 #include <ws2tcpip.h>
 #include "tcp_socket_winsock.hpp"
-#include "buffer.hpp"
+#include "read_write_buffer.hpp"
 
 TcpSocketWinsock::TcpSocketWinsock() {
     InitializeWinsock();

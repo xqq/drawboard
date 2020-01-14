@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <functional>
 #include "common/abstract_canvas.hpp"
-#include "socket/buffer.hpp"
+#include "socket/read_write_buffer.hpp"
 #include "socket/tcp_socket.hpp"
 
 class DrawClient {
@@ -29,7 +29,7 @@ public:
 private:
     void onSocketConnected();
     void onSocketDisconnected();
-    void onSocketDataArrival(Buffer* buffer, size_t nread);
+    void onSocketDataArrival(ReadWriteBuffer* buffer, size_t nread);
     void onSocketError(std::string message);
     void onPacketCallback(const Packet* packet);
 private:
