@@ -28,10 +28,10 @@ public:
     void Render(int width, int height);
     const char* GetPixelBuffer();
 private:
-    void onSocketConnected();
-    void onSocketDisconnected();
-    void onSocketDataArrival(ReadWriteBuffer* buffer, size_t nread, TcpSocket* socket, void* user_data);
-    void onSocketError(std::string message);
+    void onSocketConnected(TcpSocket* socket);
+    void onSocketDisconnected(TcpSocket* socket);
+    void onSocketDataArrival(TcpSocket* socket, ReadWriteBuffer* buffer, size_t nread);
+    void onSocketError(TcpSocket* socket, const std::string& message);
     void onPacketCallback(const Packet* packet);
 private:
     AbstractCanvas canvas_;

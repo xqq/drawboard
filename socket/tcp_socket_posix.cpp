@@ -46,7 +46,7 @@ bool TcpSocketPosix::Connect(std::string connect_addr, uint16_t port) {
 
     int enable = 1;
     if (setsockopt(fd_, IPPROTO_TCP, TCP_NODELAY, &enable, sizeof(enable)) == -1) {
-        on_error_("setsockopt(TCP_NODELAY) failed");
+        on_error_(this, "setsockopt(TCP_NODELAY) failed");
         return false;
     }
 
@@ -56,11 +56,11 @@ bool TcpSocketPosix::Connect(std::string connect_addr, uint16_t port) {
 
     int ret = connect(fd_, reinterpret_cast<struct sockaddr*>(&remote_addr_), sizeof(remote_addr_));
     if (ret == -1) {
-        on_error_("connect() failed");
+        on_error_(this, "connect() failed");
         return false;
     }
 
-    on_connect_();
+    on_connect_(this);
 
     thread_ = std::thread(&TcpSocketPosix::ThreadWorker, this);
 
@@ -70,7 +70,7 @@ bool TcpSocketPosix::Connect(std::string connect_addr, uint16_t port) {
 bool TcpSocketPosix::Send(const uint8_t* buffer, size_t length) {
     int ret = send(fd_, buffer, length, 0);
     if (ret == -1) {
-        on_error_("send() returned with error");
+        on_error_(this, "send() returned with error");
         return false;
     }
     return true;
@@ -80,7 +80,7 @@ bool TcpSocketPosix::Shutdown() {
     if (fd_) {
         int ret = shutdown(fd_, SHUT_RDWR);
         if (ret == -1) {
-            on_error_("shutdown() returned with error");
+            on_error_(this, "shutdown() returned with error");
             fd_ = 0;
         }
     }
@@ -104,17 +104,17 @@ void TcpSocketPosix::ThreadWorker() {
             // connection closing
             close(fd_);
             fd_ = 0;
-            on_disconnect_();
+            on_disconnect_(this);
             break;
         } else if (nread == -1) {
             close(fd_);
             fd_ = 0;
-            on_error_("recv() returned with error");
+            on_error_(this, "recv() returned with error");
             break;
         }
 
         buffer.Write(buf, static_cast<size_t>(nread));
-        on_arrival_(&buffer, (size_t)nread, this, this->TcpSocket::user_data_);
+        on_arrival_(this, &buffer, (size_t)nread);
         memset(buf, 0, sizeof(buf));
     }
 }

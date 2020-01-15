@@ -18,7 +18,7 @@ class TcpSocket;
 class TcpListener : public Noncopyable {
 public:
     using OnAcceptedCallback = std::function<void(std::unique_ptr<TcpSocket>, struct sockaddr_in)>;
-    using OnErrorCallback = std::function<void(std::string)>;
+    using OnErrorCallback = std::function<void(const std::string& msg)>;
 public:
     static TcpListener* Create(OnAcceptedCallback on_accept, OnErrorCallback on_error);
 public:

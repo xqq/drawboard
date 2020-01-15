@@ -15,10 +15,10 @@ class ReadWriteBuffer;
 
 class TcpSocket : public Noncopyable {
 public:
-    using OnConnectedCallback = std::function<void()>;
-    using OnDisconnectCallback = std::function<void()>;
-    using OnDataArrivalCallback = std::function<void(ReadWriteBuffer* buffer, size_t nread, TcpSocket* socket, void* user_data)>;
-    using OnErrorCallback = std::function<void(std::string)>;
+    using OnConnectedCallback = std::function<void(TcpSocket* socket)>;
+    using OnDisconnectCallback = std::function<void(TcpSocket* socket)>;
+    using OnDataArrivalCallback = std::function<void(TcpSocket* socket, ReadWriteBuffer* buffer, size_t nread)>;
+    using OnErrorCallback = std::function<void(TcpSocket* socket, const std::string& msg)>;
 public:
     static TcpSocket* Create();
 public:

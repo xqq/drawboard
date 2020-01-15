@@ -11,10 +11,10 @@ using namespace std::placeholders;
 
 DrawClient::DrawClient() : socket_connected_(false), uid_(0), color_(0), sequence_id_(-1) {
     socket_.reset(TcpSocket::Create());
-    socket_->SetCallback(std::bind(&DrawClient::onSocketConnected, this),
-                         std::bind(&DrawClient::onSocketDisconnected, this),
-                         std::bind(&DrawClient::onSocketDataArrival, this, _1, _2, _3, _4),
-                         std::bind(&DrawClient::onSocketError, this, _1));
+    socket_->SetCallback(std::bind(&DrawClient::onSocketConnected, this, _1),
+                         std::bind(&DrawClient::onSocketDisconnected, this, _1),
+                         std::bind(&DrawClient::onSocketDataArrival, this, _1, _2, _3),
+                         std::bind(&DrawClient::onSocketError, this, _1, _2));
 }
 
 DrawClient::~DrawClient() {
@@ -104,21 +104,21 @@ const char *DrawClient::GetPixelBuffer() {
     return canvas_.GetPixelBuffer();
 }
 
-void DrawClient::onSocketConnected() {
+void DrawClient::onSocketConnected(TcpSocket* socket) {
     Log::Info("onSocketConnected");
     socket_connected_ = true;
 }
 
-void DrawClient::onSocketDisconnected() {
+void DrawClient::onSocketDisconnected(TcpSocket* socket) {
     Log::Info("onSocketDisonnected");
     socket_connected_ = false;
 }
 
-void DrawClient::onSocketDataArrival(ReadWriteBuffer *buffer, size_t nread, TcpSocket* socket, void* user_data) {
+void DrawClient::onSocketDataArrival(TcpSocket* socket, ReadWriteBuffer* buffer, size_t nread) {
     ParseBuffer(buffer, std::bind(&DrawClient::onPacketCallback, this, _1));
 }
 
-void DrawClient::onSocketError(std::string message) {
+void DrawClient::onSocketError(TcpSocket* socket, const std::string& message) {
     Log::ErrorF("onSocketError: %s\n", message.c_str());
     socket_connected_ = false;
 }
