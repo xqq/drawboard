@@ -1,6 +1,11 @@
+#if defined(_WIN32)
+    #include <winsock2.h>
+#else
+    #include <netinet/in.h>
+#endif
+
 #include <iostream>
 #include <ctime>
-#include <netinet/in.h>
 #include "common/log.hpp"
 #include "socket/tcp_listener.hpp"
 #include "socket/tcp_socket.hpp"
