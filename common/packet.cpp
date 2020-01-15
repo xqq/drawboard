@@ -20,16 +20,15 @@ size_t ParseBuffer(ReadWriteBuffer* buffer, PacketCallback callback) {
         }
 
         size_t packet_size = sizeof(header) + header.payload_length();
-        std::unique_ptr<uint8_t[]> packet_buffer(new uint8_t[packet_size]);
-        memset(packet_buffer.get(), 0, packet_size);
-        memcpy(packet_buffer.get(), &header, sizeof(header));
+        std::vector<uint8_t> packet_buffer(packet_size);
+        memcpy(packet_buffer.data(), &header, sizeof(header));
 
-        buffer->Read(packet_buffer.get() + sizeof(header), header.payload_length());
+        buffer->Read(packet_buffer.data() + sizeof(header), header.payload_length());
         readable = buffer->GetReadableLength();
 
-        const Packet* packet = GetPacket(packet_buffer.get());
+        const Packet* packet = GetPacket(packet_buffer.data());
 
-        callback(packet);
+        callback(packet, std::move(packet_buffer));
         packet_count++;
     }
 

@@ -13,7 +13,7 @@
 class ReadWriteBuffer;
 struct Packet;
 
-using PacketCallback = std::function<void(const Packet* packet)>;
+using PacketCallback = std::function<void(const Packet* packet, std::vector<uint8_t>&& packet_buffer)>;
 
 size_t ParseBuffer(ReadWriteBuffer* buffer, PacketCallback callback);
 

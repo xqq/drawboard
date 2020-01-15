@@ -115,7 +115,7 @@ void DrawClient::onSocketDisconnected(TcpSocket* socket) {
 }
 
 void DrawClient::onSocketDataArrival(TcpSocket* socket, ReadWriteBuffer* buffer, size_t nread) {
-    ParseBuffer(buffer, std::bind(&DrawClient::onPacketCallback, this, _1));
+    ParseBuffer(buffer, std::bind(&DrawClient::onPacketCallback, this, _1, _2));
 }
 
 void DrawClient::onSocketError(TcpSocket* socket, const std::string& message) {
@@ -123,7 +123,7 @@ void DrawClient::onSocketError(TcpSocket* socket, const std::string& message) {
     socket_connected_ = false;
 }
 
-void DrawClient::onPacketCallback(const Packet* packet) {
+void DrawClient::onPacketCallback(const Packet* packet, std::vector<uint8_t>&&) {
     Log::InfoF("onPacketCallback: %s\n", EnumNamesPacketType()[packet->header()->packet_type()]);
     switch (packet->header()->packet_type()) {
         case PacketType_ServerHello:
