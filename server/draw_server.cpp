@@ -65,7 +65,7 @@ void DrawServer::onClientDisconnected(TcpSocket* socket) {
     BroadcastUserLeave(uid);
 }
 
-void DrawServer::onClientDataArrival(TcpSocket* socket, ReadWriteBuffer *buffer, size_t nread) {
+void DrawServer::onClientDataArrival(TcpSocket* socket, ReadWriteBuffer* buffer, size_t nread) {
     uint32_t uid = static_cast<uint32_t>(reinterpret_cast<uint64_t>(socket->GetUserData()));
 
     ParseBuffer(buffer, [&](const Packet* packet, std::vector<uint8_t>&& packet_buffer) {
