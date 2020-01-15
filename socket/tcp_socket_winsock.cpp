@@ -118,7 +118,7 @@ bool TcpSocketWinsock::Shutdown() {
 }
 
 void TcpSocketWinsock::ThreadWorker() {
-    Buffer buffer(4096);
+    ReadWriteBuffer buffer(4096);
 
     uint8_t buf[512] = {0};
 
