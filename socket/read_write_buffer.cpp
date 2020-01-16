@@ -18,6 +18,7 @@ ReadWriteBuffer::ReadWriteBuffer(size_t size) {
 
 ReadWriteBuffer::~ReadWriteBuffer() {
     free(buffer_);
+    buffer_ = nullptr;
 }
 
 bool ReadWriteBuffer::Read(uint8_t* out_buf, size_t length) {

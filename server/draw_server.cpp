@@ -27,6 +27,7 @@ DrawServer::~DrawServer() {
 }
 
 void DrawServer::Start(std::string bind_addr, uint16_t port) {
+    transmit_worker_.Start();
     listener_->StartListen(std::move(bind_addr), port);
 }
 
@@ -45,6 +46,7 @@ void DrawServer::ShutdownSockets() {
 }
 
 void DrawServer::onListenerAccepted(std::unique_ptr<TcpSocket> socket, struct sockaddr_in) {
+    Log::InfoF("[Server] onListenerAccepted\n");
     socket->SetCallback(std::bind(&DrawServer::onClientConnected, this, _1),
                         std::bind(&DrawServer::onClientDisconnected, this, _1),
                         std::bind(&DrawServer::onClientDataArrival, this, _1, _2, _3),
@@ -63,7 +65,7 @@ void DrawServer::onListenerAccepted(std::unique_ptr<TcpSocket> socket, struct so
 }
 
 void DrawServer::onListenerError(const std::string& msg) {
-    Log::ErrorF("onListenerError: %s\n", msg.c_str());
+    Log::ErrorF("[Server] onListenerError: %s\n", msg.c_str());
 }
 
 void DrawServer::onClientConnected(TcpSocket* socket) {
@@ -72,7 +74,7 @@ void DrawServer::onClientConnected(TcpSocket* socket) {
 
 void DrawServer::onClientDisconnected(TcpSocket* socket) {
     uint32_t uid = static_cast<uint32_t>(reinterpret_cast<uint64_t>(socket->GetUserData()));
-    Log::InfoF("onClientDisconnected: uid %ul left\n", uid);
+    Log::InfoF("[Server] onClientDisconnected: uid %u left\n", uid);
 
     socket->Shutdown();
     socket_cluster_.erase(uid);
@@ -88,13 +90,13 @@ void DrawServer::onClientDataArrival(TcpSocket* socket, ReadWriteBuffer* buffer,
             case PacketType_StartDraw: {
                 auto payload = packet_payload->payload_as<StartDrawPayload>();
                 canvas_.BeginDraw(payload->uid(), payload->sequence_id(), payload->color());
-                BroadcastPacket(packet);
+                BroadcastPacketExclude(packet, socket);
                 break;
             }
             case PacketType_EndDraw: {
                 auto payload = packet_payload->payload_as<EndDrawPayload>();
                 canvas_.EndDraw(payload->uid(), payload->sequence_id());
-                BroadcastPacket(packet);
+                BroadcastPacketExclude(packet, socket);
                 break;
             }
             case PacketType_DrawPoints: {
@@ -106,13 +108,13 @@ void DrawServer::onClientDataArrival(TcpSocket* socket, ReadWriteBuffer* buffer,
                 std::vector<Point> points(points_vector->size());
                 memcpy(points.data(), points_vector->data(), sizeof(Vec2) * points_vector->size());
                 canvas_.DrawPoints(payload->uid(), payload->sequence_id(), points);
-                BroadcastPacket(packet);
+                BroadcastPacketExclude(packet, socket);
                 break;
             }
             case PacketType_DeleteBatch: {
                 auto payload = packet_payload->payload_as<DeleteBatchPayload>();
                 canvas_.ClearBatch(payload->uid(), payload->sequence_id());
-                BroadcastPacket(packet);
+                BroadcastPacketExclude(packet, socket);
                 break;
             }
             case PacketType_ServerHello:
@@ -128,7 +130,7 @@ void DrawServer::onClientDataArrival(TcpSocket* socket, ReadWriteBuffer* buffer,
 
 void DrawServer::onClientError(TcpSocket* socket, const std::string& message) {
     uint32_t uid = static_cast<uint32_t>(reinterpret_cast<uint64_t>(socket->GetUserData()));
-    Log::ErrorF("onClientError: uid = %ul, msg = %s\n", uid, message.c_str());
+    Log::ErrorF("[Server] onClientError: uid = %u, msg = %s\n", uid, message.c_str());
     socket->Shutdown();
     socket_cluster_.erase(uid);
 }
@@ -180,6 +182,17 @@ void DrawServer::PostFullImage(TcpSocket *socket) {
     PacketHeader header(PacketType_FullImage, builder.GetSize());
 
     PostPacket(socket, &header, builder.GetBufferPointer(), builder.GetSize());
+}
+
+void DrawServer::BroadcastPacketExclude(const Packet& packet, TcpSocket* exclude_socket) {
+    std::vector<uint8_t> packet_buffer(sizeof(packet.header) + packet.payload_buffer.size());
+
+    size_t header_size = sizeof(packet.header);
+    memcpy(packet_buffer.data(), &packet.header, header_size);
+    memcpy(packet_buffer.data() + header_size, packet.payload_buffer.data(), packet.payload_buffer.size());
+
+    Task t(TaskType::kBroadcastSendExclude, std::move(packet_buffer), exclude_socket);
+    task_queue_.Enqueue(std::move(t));
 }
 
 void DrawServer::BroadcastPacket(const Packet& packet) {

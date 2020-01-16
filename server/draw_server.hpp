@@ -34,6 +34,7 @@ private:
     void PostPacket(TcpSocket* socket, PacketHeader* header, const uint8_t* payload, size_t payload_length);
     void PostServerHello(TcpSocket* socket, uint32_t uid, uint32_t color);
     void PostFullImage(TcpSocket* socket);
+    void BroadcastPacketExclude(const Packet& packet, TcpSocket* exclude_socket);
     void BroadcastPacket(const Packet& packet);
     void BroadcastPacket(PacketHeader* header, const uint8_t* payload, size_t payload_length);
     void BroadcastUserEnter(uint32_t uid, uint32_t color);
