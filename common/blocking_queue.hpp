@@ -62,7 +62,7 @@ public:
     T Dequeue() {
         std::lock_guard<std::mutex> guard(mutex_);
 
-        T& element = deque_.front();
+        T element = std::move(deque_.front());
         deque_.pop_front();
 
         if (deque_.empty()) {
@@ -71,7 +71,7 @@ public:
             produce_cv_.notify_one();
         }
 
-        return element;
+        return std::move(element);
     }
 
     void NotifyExit() {
