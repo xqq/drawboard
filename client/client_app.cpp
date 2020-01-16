@@ -3,6 +3,7 @@
 //
 
 #include <iostream>
+#include <sstream>
 #include "client_app.hpp"
 
 constexpr int viewport_width = 1280;
@@ -16,7 +17,11 @@ int ClientApp::Run() {
         return 1;
     }
 
-    SDL_Window* window = SDL_CreateWindow("Drawboard", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, viewport_width, viewport_height, SDL_WINDOW_SHOWN);
+    std::ostringstream title_stream;
+    title_stream << "Drawboard - Server: " << host_ << ":" << port_;
+    std::string title = title_stream.str();
+
+    SDL_Window* window = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, viewport_width, viewport_height, SDL_WINDOW_SHOWN);
     if (window == nullptr) {
         std::cout << SDL_GetError() << std::endl;
         return 1;
@@ -79,7 +84,7 @@ int ClientApp::Run() {
 
         client_.Render(viewport_width, viewport_height);
 
-        SDL_UpdateTexture(texture, NULL, client_.GetPixelBuffer(), 1280 * sizeof(uint32_t));
+        SDL_UpdateTexture(texture, NULL, client_.GetPixelBuffer(), viewport_width * sizeof(uint32_t));
 
         SDL_RenderClear(renderer);
         SDL_RenderCopy(renderer, texture, NULL, NULL);
