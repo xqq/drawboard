@@ -10,11 +10,17 @@
 #include <vector>
 #include <memory>
 #include <functional>
+#include "protocol/protocol_generated.h"
 
 class ReadWriteBuffer;
-struct Packet;
 
-using PacketCallback = std::function<void(const Packet* packet, std::vector<uint8_t>&& packet_buffer)>;
+struct Packet {
+    PacketHeader header;
+    std::vector<uint8_t> payload_buffer;
+    const PacketPayload* payload;
+};
+
+using PacketCallback = std::function<void(Packet&& packet)>;
 
 size_t ParseBuffer(ReadWriteBuffer* buffer, PacketCallback callback);
 
