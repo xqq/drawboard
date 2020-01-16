@@ -26,6 +26,7 @@ public:
     void BeginDraw();
     void EndDraw();
     void DrawPoint(Point point);
+    void UndoLast();
     void Render(int width, int height);
     const char* GetPixelBuffer();
 private:

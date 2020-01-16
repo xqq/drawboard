@@ -95,6 +95,23 @@ void DrawClient::DrawPoint(Point point) {
     SendPacket(&header, builder.GetBufferPointer(), builder.GetSize());
 }
 
+void DrawClient::UndoLast() {
+    if (!socket_connected_ || sequence_id_ < 0) {
+        return;
+    }
+    canvas_.ClearBatch(uid_, sequence_id_);
+
+    flatbuffers::FlatBufferBuilder builder;
+    auto payload = CreateDeleteBatchPayload(builder, uid_, sequence_id_);
+    auto packet_payload = CreatePacketPayload(builder, Payload_DeleteBatchPayload, payload.Union());
+    builder.Finish(packet_payload);
+
+    PacketHeader header(PacketType_DeleteBatch, builder.GetSize());
+
+    SendPacket(&header, builder.GetBufferPointer(), builder.GetSize());
+    sequence_id_--;
+}
+
 void DrawClient::Render(int width, int height) {
     canvas_.Render(width, height);
 }

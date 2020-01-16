@@ -39,11 +39,21 @@ int ClientApp::Run() {
 
     while (true) {
         SDL_Event event;
-        SDL_PollEvent(&event);
-        if (event.type == SDL_QUIT) {
-            break;
-        } else {
+        if (SDL_PollEvent(&event) == 1) {
+            if (event.type == SDL_QUIT) {
+                break;
+            }
+
             switch (event.type) {
+                case SDL_KEYDOWN:
+                    if (event.key.keysym.sym == SDLK_z) {
+                        const uint8_t* keystates = SDL_GetKeyboardState(nullptr);
+                        if (keystates[SDL_SCANCODE_LCTRL]) {
+                            // Ctrl + Z
+                            client_.UndoLast();
+                        }
+                    }
+                    break;
                 case SDL_MOUSEBUTTONUP:
                     if (event.button.button == SDL_BUTTON_LEFT) {
                         left_mouse_down = false;
