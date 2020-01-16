@@ -9,6 +9,7 @@
 #include <memory>
 #include <functional>
 #include "common/abstract_canvas.hpp"
+#include "common/packet.hpp"
 #include "socket/read_write_buffer.hpp"
 #include "socket/tcp_socket.hpp"
 

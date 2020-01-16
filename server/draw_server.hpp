@@ -12,6 +12,9 @@
 #include "socket/tcp_socket.hpp"
 #include "transmit_worker.hpp"
 
+struct Packet;
+struct PacketHeader;
+
 class DrawServer {
 public:
     DrawServer();
