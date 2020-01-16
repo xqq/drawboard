@@ -73,7 +73,7 @@ void DrawClient::EndDraw() {
     auto packet_payload = CreatePacketPayload(builder, Payload_EndDrawPayload, payload.Union());
     builder.Finish(packet_payload);
 
-    PacketHeader header(PacketType_EndDraw, sizeof(builder.GetSize()));
+    PacketHeader header(PacketType_EndDraw, builder.GetSize());
 
     SendPacket(&header, builder.GetBufferPointer(), builder.GetSize());
 }
@@ -87,12 +87,12 @@ void DrawClient::DrawPoint(Point point) {
     flatbuffers::FlatBufferBuilder builder;
     std::vector<Vec2> points = {Vec2((int16_t)point.x, (int16_t)point.y)};
     auto payload = CreateDrawPointsPayloadDirect(builder, uid_, sequence_id_, &points);
-    auto packet_payload = CreatePacketPayload(builder, Payload_EndDrawPayload, payload.Union());
+    auto packet_payload = CreatePacketPayload(builder, Payload_DrawPointsPayload, payload.Union());
     builder.Finish(packet_payload);
 
     PacketHeader header(PacketType_DrawPoints, builder.GetSize());
 
-    socket_->Send(builder.GetBufferPointer(), builder.GetSize());
+    SendPacket(&header, builder.GetBufferPointer(), builder.GetSize());
 }
 
 void DrawClient::Render(int width, int height) {
@@ -114,12 +114,12 @@ void DrawClient::SendPacket(PacketHeader* header, const uint8_t* payload, size_t
 }
 
 void DrawClient::onSocketConnected(TcpSocket* socket) {
-    Log::Info("onSocketConnected");
+    Log::Info("[Client] onSocketConnected");
     socket_connected_ = true;
 }
 
 void DrawClient::onSocketDisconnected(TcpSocket* socket) {
-    Log::Info("onSocketDisonnected");
+    Log::Info("[Client] onSocketDisonnected");
     socket_connected_ = false;
 }
 
@@ -128,12 +128,12 @@ void DrawClient::onSocketDataArrival(TcpSocket* socket, ReadWriteBuffer* buffer,
 }
 
 void DrawClient::onSocketError(TcpSocket* socket, const std::string& message) {
-    Log::ErrorF("onSocketError: %s\n", message.c_str());
+    Log::ErrorF("[Client] onSocketError: %s\n", message.c_str());
     socket_connected_ = false;
 }
 
 void DrawClient::onPacketCallback(Packet&& packet) {
-    Log::InfoF("onPacketCallback: %s\n", EnumNamesPacketType()[packet.header.packet_type()]);
+    Log::InfoF("[Client] onPacketCallback: %s\n", EnumNamesPacketType()[packet.header.packet_type()]);
     const PacketPayload* packet_payload = packet.payload;
     switch (packet.header.packet_type()) {
         case PacketType_ServerHello:
@@ -185,12 +185,12 @@ void DrawClient::onPacketCallback(Packet&& packet) {
         }
         case PacketType_UserEnter: {
             auto payload = packet_payload->payload_as<UserEnterPayload>();
-            Log::InfoF("User %d entered with color 0x%08x\n", payload->uid(), payload->color());
+            Log::InfoF("[Client] User %d entered with color 0x%08x\n", payload->uid(), payload->color());
             break;
         }
         case PacketType_UserLeave: {
             auto payload = packet_payload->payload_as<UserLeavePayload>();
-            Log::InfoF("User %d leaved from room\n", payload->uid());
+            Log::InfoF("[Client] User %d leaved from room\n", payload->uid());
             break;
         }
     }
