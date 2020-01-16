@@ -14,6 +14,8 @@ enum class TaskType : int {
     kPVoid
 };
 
+class TcpSocket;
+
 struct Task {
 public:
     TaskType type;
