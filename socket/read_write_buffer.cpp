@@ -53,3 +53,7 @@ size_t ReadWriteBuffer::GetReadableLength() {
     ptrdiff_t diff = write_pointer_ - read_pointer_;
     return (size_t)diff;
 }
+
+void ReadWriteBuffer::RollbackReadPointer(size_t length) {
+    read_pointer_ -= length;
+}

@@ -16,6 +16,7 @@ public:
     bool Read(uint8_t* out_buf, size_t length);
     bool Write(const uint8_t* buf, size_t length);
     size_t GetReadableLength();
+    void RollbackReadPointer(size_t length);
 private:
     size_t size_;
     uint8_t* buffer_;
