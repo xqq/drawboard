@@ -25,6 +25,14 @@ void TransmitWorker::Run() {
                 TcpSocket* socket = iter.second.get();
                 socket->Send(msg.buffer.data(), msg.buffer.size());
             }
+        } else if (msg == TaskType::kBroadcastSendExclude) {
+            for (auto& iter : *socket_cluster_) {
+                TcpSocket* socket = iter.second.get();
+                if (socket != msg.socket) {
+                    socket->Send(msg.buffer.data(), msg.buffer.size());
+                }
+            }
         }
     }
+
 }

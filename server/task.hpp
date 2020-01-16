@@ -11,6 +11,7 @@
 enum class TaskType : int {
     kPrivateSend = 0,
     kBroadcastSend,
+    kBroadcastSendExclude,
     kPVoid
 };
 
