@@ -76,7 +76,7 @@ bool TcpSocketWinsock::Connect(std::string connect_addr, uint16_t port) {
 
     ret = connect(socket_, result->ai_addr, static_cast<int>(result->ai_addrlen));
     if (ret == SOCKET_ERROR) {
-        on_error_(this, "connect() failec");
+        on_error_(this, "connect() failed");
         closesocket(socket_);
         socket_ = 0;
         freeaddrinfo(result);
