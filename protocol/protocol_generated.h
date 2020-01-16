@@ -8,7 +8,7 @@
 
 struct PacketHeader;
 
-struct Packet;
+struct PacketPayload;
 
 struct Vec2;
 
@@ -212,15 +212,11 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(2) Vec2 FLATBUFFERS_FINAL_CLASS {
 };
 FLATBUFFERS_STRUCT_END(Vec2, 4);
 
-struct Packet FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+struct PacketPayload FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_HEADER = 4,
-    VT_PAYLOAD_TYPE = 6,
-    VT_PAYLOAD = 8
+    VT_PAYLOAD_TYPE = 4,
+    VT_PAYLOAD = 6
   };
-  const PacketHeader *header() const {
-    return GetStruct<const PacketHeader *>(VT_HEADER);
-  }
   Payload payload_type() const {
     return static_cast<Payload>(GetField<uint8_t>(VT_PAYLOAD_TYPE, 0));
   }
@@ -254,7 +250,6 @@ struct Packet FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<PacketHeader>(verifier, VT_HEADER) &&
            VerifyField<uint8_t>(verifier, VT_PAYLOAD_TYPE) &&
            VerifyOffset(verifier, VT_PAYLOAD) &&
            VerifyPayload(verifier, payload(), payload_type()) &&
@@ -262,70 +257,65 @@ struct Packet FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
 };
 
-template<> inline const ServerHelloPayload *Packet::payload_as<ServerHelloPayload>() const {
+template<> inline const ServerHelloPayload *PacketPayload::payload_as<ServerHelloPayload>() const {
   return payload_as_ServerHelloPayload();
 }
 
-template<> inline const FullImagePayload *Packet::payload_as<FullImagePayload>() const {
+template<> inline const FullImagePayload *PacketPayload::payload_as<FullImagePayload>() const {
   return payload_as_FullImagePayload();
 }
 
-template<> inline const StartDrawPayload *Packet::payload_as<StartDrawPayload>() const {
+template<> inline const StartDrawPayload *PacketPayload::payload_as<StartDrawPayload>() const {
   return payload_as_StartDrawPayload();
 }
 
-template<> inline const EndDrawPayload *Packet::payload_as<EndDrawPayload>() const {
+template<> inline const EndDrawPayload *PacketPayload::payload_as<EndDrawPayload>() const {
   return payload_as_EndDrawPayload();
 }
 
-template<> inline const DrawPointsPayload *Packet::payload_as<DrawPointsPayload>() const {
+template<> inline const DrawPointsPayload *PacketPayload::payload_as<DrawPointsPayload>() const {
   return payload_as_DrawPointsPayload();
 }
 
-template<> inline const DeleteBatchPayload *Packet::payload_as<DeleteBatchPayload>() const {
+template<> inline const DeleteBatchPayload *PacketPayload::payload_as<DeleteBatchPayload>() const {
   return payload_as_DeleteBatchPayload();
 }
 
-template<> inline const UserEnterPayload *Packet::payload_as<UserEnterPayload>() const {
+template<> inline const UserEnterPayload *PacketPayload::payload_as<UserEnterPayload>() const {
   return payload_as_UserEnterPayload();
 }
 
-template<> inline const UserLeavePayload *Packet::payload_as<UserLeavePayload>() const {
+template<> inline const UserLeavePayload *PacketPayload::payload_as<UserLeavePayload>() const {
   return payload_as_UserLeavePayload();
 }
 
-struct PacketBuilder {
+struct PacketPayloadBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_header(const PacketHeader *header) {
-    fbb_.AddStruct(Packet::VT_HEADER, header);
-  }
   void add_payload_type(Payload payload_type) {
-    fbb_.AddElement<uint8_t>(Packet::VT_PAYLOAD_TYPE, static_cast<uint8_t>(payload_type), 0);
+    fbb_.AddElement<uint8_t>(PacketPayload::VT_PAYLOAD_TYPE, static_cast<uint8_t>(payload_type), 0);
   }
   void add_payload(flatbuffers::Offset<void> payload) {
-    fbb_.AddOffset(Packet::VT_PAYLOAD, payload);
+    fbb_.AddOffset(PacketPayload::VT_PAYLOAD, payload);
   }
-  explicit PacketBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  explicit PacketPayloadBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  PacketBuilder &operator=(const PacketBuilder &);
-  flatbuffers::Offset<Packet> Finish() {
+  PacketPayloadBuilder &operator=(const PacketPayloadBuilder &);
+  flatbuffers::Offset<PacketPayload> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<Packet>(end);
+    auto o = flatbuffers::Offset<PacketPayload>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<Packet> CreatePacket(
+inline flatbuffers::Offset<PacketPayload> CreatePacketPayload(
     flatbuffers::FlatBufferBuilder &_fbb,
-    const PacketHeader *header = 0,
     Payload payload_type = Payload_NONE,
     flatbuffers::Offset<void> payload = 0) {
-  PacketBuilder builder_(_fbb);
+  PacketPayloadBuilder builder_(_fbb);
   builder_.add_payload(payload);
-  builder_.add_header(header);
   builder_.add_payload_type(payload_type);
   return builder_.Finish();
 }
@@ -894,33 +884,33 @@ inline bool VerifyPayloadVector(flatbuffers::Verifier &verifier, const flatbuffe
   return true;
 }
 
-inline const Packet *GetPacket(const void *buf) {
-  return flatbuffers::GetRoot<Packet>(buf);
+inline const PacketPayload *GetPacketPayload(const void *buf) {
+  return flatbuffers::GetRoot<PacketPayload>(buf);
 }
 
-inline const Packet *GetSizePrefixedPacket(const void *buf) {
-  return flatbuffers::GetSizePrefixedRoot<Packet>(buf);
+inline const PacketPayload *GetSizePrefixedPacketPayload(const void *buf) {
+  return flatbuffers::GetSizePrefixedRoot<PacketPayload>(buf);
 }
 
-inline bool VerifyPacketBuffer(
+inline bool VerifyPacketPayloadBuffer(
     flatbuffers::Verifier &verifier) {
-  return verifier.VerifyBuffer<Packet>(nullptr);
+  return verifier.VerifyBuffer<PacketPayload>(nullptr);
 }
 
-inline bool VerifySizePrefixedPacketBuffer(
+inline bool VerifySizePrefixedPacketPayloadBuffer(
     flatbuffers::Verifier &verifier) {
-  return verifier.VerifySizePrefixedBuffer<Packet>(nullptr);
+  return verifier.VerifySizePrefixedBuffer<PacketPayload>(nullptr);
 }
 
-inline void FinishPacketBuffer(
+inline void FinishPacketPayloadBuffer(
     flatbuffers::FlatBufferBuilder &fbb,
-    flatbuffers::Offset<Packet> root) {
+    flatbuffers::Offset<PacketPayload> root) {
   fbb.Finish(root);
 }
 
-inline void FinishSizePrefixedPacketBuffer(
+inline void FinishSizePrefixedPacketPayloadBuffer(
     flatbuffers::FlatBufferBuilder &fbb,
-    flatbuffers::Offset<Packet> root) {
+    flatbuffers::Offset<PacketPayload> root) {
   fbb.FinishSizePrefixed(root);
 }
 
