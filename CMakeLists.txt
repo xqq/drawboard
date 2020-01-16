@@ -58,6 +58,7 @@ endif()
 
 target_include_directories(drawboard
     PRIVATE
+        thirdparty/argh
         ${SDL2_INCLUDE_DIRS}
 )
 
