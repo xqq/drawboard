@@ -24,7 +24,6 @@ void AbstractCanvas::EndDraw(uint32_t uid, uint32_t sequence_id) {
 }
 
 void AbstractCanvas::DrawPoint(uint32_t uid, uint32_t sequence_id, Point point) {
-    Log::InfoF("DrawPoint: uid = %d, sequence_id = %d, x = %d, y = %d\n", uid, sequence_id, point.x, point.y);
     auto target_user = point_map_.find(uid);
     if (target_user == point_map_.end()) {
         return;
@@ -40,7 +39,6 @@ void AbstractCanvas::DrawPoint(uint32_t uid, uint32_t sequence_id, Point point) 
 }
 
 void AbstractCanvas::DrawPoints(uint32_t uid, uint32_t sequence_id, const std::vector<Point>& points) {
-    Log::InfoF("DrawPoints: uid = %d, sequence_id = %d, size = %ul\n", uid, sequence_id, points.size());
     auto target_user = point_map_.find(uid);
     if (target_user == point_map_.end()) {
         return;
@@ -76,7 +74,6 @@ void AbstractCanvas::Render(int width, int height) {
         return;
     }
 
-    Log::InfoF("Render: width = %d, height = %d\n", width, height);
     viewport_width_ = width;
     viewport_height_ = height;
 
@@ -115,7 +112,6 @@ void AbstractCanvas::RenderPoint(Point p, uint32_t color) {
 }
 
 void AbstractCanvas::RenderLine(Point p1, Point p2, uint32_t color){
-    // Log::InfoF("RenderLine: x1 = %d, y1 = %d, x2 = %d, y2 = %d, color = %d\n", p1.x, p1.y, p2.x, p2.y, color);
     bool steep = std::abs(p2.y - p1.y) > std::abs(p2.x - p1.x);
     if (steep) {
         std::swap(p1.x, p1.y);
