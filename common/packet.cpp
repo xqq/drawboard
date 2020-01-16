@@ -2,6 +2,7 @@
 // @author magicxqq <xqq@xqq.im>
 //
 
+#include <cassert>
 #include "socket/read_write_buffer.hpp"
 #include "protocol/protocol_generated.h"
 #include "packet.hpp"
@@ -14,8 +15,11 @@ size_t ParseBuffer(ReadWriteBuffer* buffer, PacketCallback callback) {
         Packet packet;
         buffer->Read(reinterpret_cast<uint8_t*>(&packet.header), sizeof(packet.header));
 
+        assert(packet.header.packet_type() >= PacketType_MIN && packet.header.packet_type() <= PacketType_MAX);
+
         readable = buffer->GetReadableLength();
         if (readable < packet.header.payload_length()) {
+            buffer->RollbackReadPointer(sizeof(packet.header));
             break;
         }
 
