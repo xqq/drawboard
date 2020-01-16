@@ -16,6 +16,7 @@
 using namespace std::placeholders;
 
 DrawServer::DrawServer() : max_uid_(-1) {
+    srand(time(nullptr));
     transmit_worker_.SetTaskQueue(task_queue_);
     transmit_worker_.SetSocketCluster(socket_cluster_);
     listener_.reset(TcpListener::Create(std::bind(&DrawServer::onListenerAccepted, this, _1, _2),
@@ -244,9 +245,9 @@ uint32_t DrawServer::RandomColor() {
     uint8_t g = rand() % 256;
     uint8_t b = rand() % 256;
 
-    r = (r + 255) / 2;
-    g = (r + 255) / 2;
-    b = (r + 255) / 2;
+    r = ((int)r + 255) / 2;
+    g = ((int)g + 255) / 2;
+    b = ((int)b + 255) / 2;
 
     return 0xFF << 24 |
            r    << 16 |

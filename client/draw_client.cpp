@@ -150,7 +150,6 @@ void DrawClient::onSocketError(TcpSocket* socket, const std::string& message) {
 }
 
 void DrawClient::onPacketCallback(Packet&& packet) {
-    Log::InfoF("[Client] onPacketCallback: %s\n", EnumNamesPacketType()[packet.header.packet_type()]);
     const PacketPayload* packet_payload = packet.payload;
     switch (packet.header.packet_type()) {
         case PacketType_ServerHello:

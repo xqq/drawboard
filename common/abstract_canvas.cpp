@@ -7,7 +7,6 @@
 #include "abstract_canvas.hpp"
 
 void AbstractCanvas::BeginDraw(uint32_t uid, uint32_t sequence_id, uint32_t color) {
-    Log::Info("BeginDraw");
     std::lock_guard<std::mutex> lock(mutex_);
 
     auto target_user = point_map_.find(uid);
