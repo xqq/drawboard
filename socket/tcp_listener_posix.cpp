@@ -70,7 +70,7 @@ bool TcpListenerPosix::EndListen() {
     }
 
     if (thread_.joinable()) {
-        thread_.join();
+        thread_.detach();
     }
 
     if (listen_fd_) {

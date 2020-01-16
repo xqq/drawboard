@@ -105,7 +105,7 @@ bool TcpListenerWinsock::EndListen() {
     }
 
     if (thread_.joinable()) {
-        thread_.join();
+        thread_.detach();
     }
 
     if (listen_socket_) {

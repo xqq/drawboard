@@ -86,7 +86,7 @@ bool TcpSocketPosix::Shutdown() {
     }
 
     if (thread_.joinable()) {
-        thread_.join();
+        thread_.detach();
     }
 
     return true;
