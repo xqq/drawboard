@@ -28,11 +28,13 @@ public:
     void Render(int width, int height);
     const char* GetPixelBuffer();
 private:
+    void SendPacket(PacketHeader* header, const uint8_t* payload, size_t payload_length);
+private:
     void onSocketConnected(TcpSocket* socket);
     void onSocketDisconnected(TcpSocket* socket);
     void onSocketDataArrival(TcpSocket* socket, ReadWriteBuffer* buffer, size_t nread);
     void onSocketError(TcpSocket* socket, const std::string& message);
-    void onPacketCallback(const Packet* packet, std::vector<uint8_t>&&);
+    void onPacketCallback(Packet&& packet);
 private:
     AbstractCanvas canvas_;
     std::unique_ptr<TcpSocket> socket_;

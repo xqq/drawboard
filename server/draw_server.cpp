@@ -31,8 +31,17 @@ void DrawServer::Start(std::string bind_addr, uint16_t port) {
 }
 
 void DrawServer::Stop() {
+    task_queue_.Clear();
     task_queue_.NotifyExit();
     listener_->EndListen();
+    ShutdownSockets();
+}
+
+void DrawServer::ShutdownSockets() {
+    for (auto& iter : socket_cluster_) {
+        TcpSocket* socket = iter.second.get();
+        socket->Shutdown();
+    }
 }
 
 void DrawServer::onListenerAccepted(std::unique_ptr<TcpSocket> socket, struct sockaddr_in) {
@@ -42,14 +51,14 @@ void DrawServer::onListenerAccepted(std::unique_ptr<TcpSocket> socket, struct so
                         std::bind(&DrawServer::onClientError, this, _1, _2));
     uint32_t uid = ++max_uid_;
     socket->SetUserData(reinterpret_cast<void*>(uid));
-    TcpSocket* raw_socket = socket.get();
+    TcpSocket* socket_ptr = socket.get();
     socket_cluster_.insert({uid, std::move(socket)});
 
     // determine user color
     uint32_t color = RandomColor();
 
-    PostServerHello(raw_socket, uid, color);
-    PostFullImage(raw_socket);
+    PostServerHello(socket_ptr, uid, color);
+    PostFullImage(socket_ptr);
     BroadcastUserEnter(uid, color);
 }
 
@@ -73,22 +82,23 @@ void DrawServer::onClientDisconnected(TcpSocket* socket) {
 void DrawServer::onClientDataArrival(TcpSocket* socket, ReadWriteBuffer* buffer, size_t nread) {
     uint32_t uid = static_cast<uint32_t>(reinterpret_cast<uint64_t>(socket->GetUserData()));
 
-    ParseBuffer(buffer, [&](const Packet* packet, std::vector<uint8_t>&& packet_buffer) {
-        switch (packet->header()->packet_type()) {
+    ParseBuffer(buffer, [&](Packet&& packet) {
+        const PacketPayload* packet_payload = packet.payload;
+        switch (packet.header.packet_type()) {
             case PacketType_StartDraw: {
-                auto payload = packet->payload_as<StartDrawPayload>();
+                auto payload = packet_payload->payload_as<StartDrawPayload>();
                 canvas_.BeginDraw(payload->uid(), payload->sequence_id(), payload->color());
-                BroadcastPacketBuffer(std::move(packet_buffer));
+                BroadcastPacket(packet);
                 break;
             }
             case PacketType_EndDraw: {
-                auto payload = packet->payload_as<EndDrawPayload>();
+                auto payload = packet_payload->payload_as<EndDrawPayload>();
                 canvas_.EndDraw(payload->uid(), payload->sequence_id());
-                BroadcastPacketBuffer(std::move(packet_buffer));
+                BroadcastPacket(packet);
                 break;
             }
             case PacketType_DrawPoints: {
-                auto payload = packet->payload_as<DrawPointsPayload>();
+                auto payload = packet_payload->payload_as<DrawPointsPayload>();
                 auto points_vector = payload->points();
                 if (points_vector->size() == 0) {
                     break;
@@ -96,13 +106,13 @@ void DrawServer::onClientDataArrival(TcpSocket* socket, ReadWriteBuffer* buffer,
                 std::vector<Point> points(points_vector->size());
                 memcpy(points.data(), points_vector->data(), sizeof(Vec2) * points_vector->size());
                 canvas_.DrawPoints(payload->uid(), payload->sequence_id(), points);
-                BroadcastPacketBuffer(std::move(packet_buffer));
+                BroadcastPacket(packet);
                 break;
             }
             case PacketType_DeleteBatch: {
-                auto payload = packet->payload_as<DeleteBatchPayload>();
+                auto payload = packet_payload->payload_as<DeleteBatchPayload>();
                 canvas_.ClearBatch(payload->uid(), payload->sequence_id());
-                BroadcastPacketBuffer(std::move(packet_buffer));
+                BroadcastPacket(packet);
                 break;
             }
             case PacketType_ServerHello:
@@ -123,22 +133,33 @@ void DrawServer::onClientError(TcpSocket* socket, const std::string& message) {
     socket_cluster_.erase(uid);
 }
 
-void DrawServer::PostServerHello(TcpSocket *socket, uint32_t uid, uint32_t color) {
-    PacketHeader header(PacketType_ServerHello, sizeof(ServerHelloPayload));
+void DrawServer::PostPacket(TcpSocket* socket, PacketHeader* header, const uint8_t* payload, size_t payload_length) {
+    std::vector<uint8_t> packet_buffer(sizeof(*header) + payload_length);
 
+    size_t header_size = sizeof(*header);
+    memcpy(packet_buffer.data(), header, header_size);
+    memcpy(packet_buffer.data() + header_size, payload, payload_length);
+
+    Task t(TaskType::kPrivateSend, std::move(packet_buffer), socket);
+    task_queue_.Enqueue(std::move(t));
+}
+
+void DrawServer::PostServerHello(TcpSocket *socket, uint32_t uid, uint32_t color) {
     flatbuffers::FlatBufferBuilder builder;
     auto payload = CreateServerHelloPayload(builder, uid, color);
-    auto packet = CreatePacket(builder, &header, Payload_ServerHelloPayload, payload.Union());
-    builder.Finish(packet);
+    auto packet_payload = CreatePacketPayload(builder, Payload_ServerHelloPayload, payload.Union());
+    builder.Finish(packet_payload);
 
-    Task t(TaskType::kPrivateSend, std::move(BufToVector(builder.GetBufferPointer(), builder.GetSize())), socket);
-    task_queue_.Enqueue(std::move(t));
+    PacketHeader header(PacketType_ServerHello, builder.GetSize());
+
+    PostPacket(socket, &header, builder.GetBufferPointer(), builder.GetSize());
 }
 
 void DrawServer::PostFullImage(TcpSocket *socket) {
     const PointMap* map = canvas_.GetMap();
 
-    PacketHeader header(PacketType_FullImage, sizeof(FullImagePayload));
+    std::vector<flatbuffers::Offset<DrawBatch>> draw_batch_offsets;
+
     flatbuffers::FlatBufferBuilder builder;
 
     for (auto& user_pair : *map) {
@@ -148,37 +169,61 @@ void DrawServer::PostFullImage(TcpSocket *socket) {
             std::vector<Vec2> points(batch_info->points.size());
             memcpy(points.data(), batch_info->points.data(), sizeof(Vec2) * batch_info->points.size());
             auto batch = CreateDrawBatchDirect(builder, user_pair.first, batch_pair.first, batch_info->color, &points);
+            draw_batch_offsets.push_back(batch);
         }
     }
+
+    auto payload = CreateFullImagePayloadDirect(builder, &draw_batch_offsets);
+    auto packet_payload = CreatePacketPayload(builder, Payload_FullImagePayload, payload.Union());
+    builder.Finish(packet_payload);
+
+    PacketHeader header(PacketType_FullImage, builder.GetSize());
+
+    PostPacket(socket, &header, builder.GetBufferPointer(), builder.GetSize());
 }
 
-void DrawServer::BroadcastPacketBuffer(std::vector<uint8_t>&& packet_buffer) {
+void DrawServer::BroadcastPacket(const Packet& packet) {
+    std::vector<uint8_t> packet_buffer(sizeof(packet.header) + packet.payload_buffer.size());
+
+    size_t header_size = sizeof(packet.header);
+    memcpy(packet_buffer.data(), &packet.header, header_size);
+    memcpy(packet_buffer.data() + header_size, packet.payload_buffer.data(), packet.payload_buffer.size());
+
+    Task t(TaskType::kBroadcastSend, std::move(packet_buffer));
+    task_queue_.Enqueue(std::move(t));
+}
+
+void DrawServer::BroadcastPacket(PacketHeader* header, const uint8_t* payload, size_t payload_length) {
+    std::vector<uint8_t> packet_buffer(sizeof(*header) + payload_length);
+
+    size_t header_size = sizeof(*header);
+    memcpy(packet_buffer.data(), header, header_size);
+    memcpy(packet_buffer.data() + header_size, payload, payload_length);
+
     Task t(TaskType::kBroadcastSend, std::move(packet_buffer));
     task_queue_.Enqueue(std::move(t));
 }
 
 void DrawServer::BroadcastUserEnter(uint32_t uid, uint32_t color) {
-    PacketHeader header(PacketType_UserEnter, sizeof(UserEnterPayload));
-
     flatbuffers::FlatBufferBuilder builder;
     auto payload = CreateUserEnterPayload(builder, uid, color);
-    auto packet = CreatePacket(builder, &header, Payload_UserEnterPayload, payload.Union());
-    builder.Finish(packet);
+    auto packet_payload = CreatePacketPayload(builder, Payload_UserEnterPayload, payload.Union());
+    builder.Finish(packet_payload);
 
-    Task t(TaskType::kBroadcastSend, std::move(BufToVector(builder.GetBufferPointer(), builder.GetSize())));
-    task_queue_.Enqueue(std::move(t));
+    PacketHeader header(PacketType_UserEnter, builder.GetSize());
+
+    BroadcastPacket(&header, builder.GetBufferPointer(), builder.GetSize());
 }
 
 void DrawServer::BroadcastUserLeave(uint32_t uid) {
-    PacketHeader header(PacketType_UserLeave, sizeof(UserLeavePayload));
-    const int a = sizeof(UserLeavePayload);
     flatbuffers::FlatBufferBuilder builder;
     auto payload = CreateUserEnterPayload(builder, uid);
-    auto packet = CreatePacket(builder, &header, Payload_UserLeavePayload, payload.Union());
-    builder.Finish(packet);
+    auto packet_payload = CreatePacketPayload(builder, Payload_UserLeavePayload, payload.Union());
+    builder.Finish(packet_payload);
 
-    Task t(TaskType::kBroadcastSend, std::move(BufToVector(builder.GetBufferPointer(), builder.GetSize())));
-    task_queue_.Enqueue(std::move(t));
+    PacketHeader header(PacketType_UserLeave, builder.GetSize());
+
+    BroadcastPacket(&header, builder.GetBufferPointer(), builder.GetSize());
 }
 
 uint32_t DrawServer::RandomColor() {

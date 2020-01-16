@@ -52,14 +52,14 @@ void DrawClient::BeginDraw() {
     sequence_id_++;
     canvas_.BeginDraw(uid_, sequence_id_, color_);
 
-    PacketHeader header(PacketType_StartDraw, sizeof(StartDrawPayload));
-
     flatbuffers::FlatBufferBuilder builder;
     auto payload = CreateStartDrawPayload(builder, uid_, sequence_id_, color_);
-    auto packet = CreatePacket(builder, &header, Payload_StartDrawPayload, payload.Union());
-    builder.Finish(packet);
+    auto packet_payload = CreatePacketPayload(builder, Payload_StartDrawPayload, payload.Union());
+    builder.Finish(packet_payload);
 
-    socket_->Send(builder.GetBufferPointer(), builder.GetSize());
+    PacketHeader header(PacketType_StartDraw, builder.GetSize());
+
+    SendPacket(&header, builder.GetBufferPointer(), builder.GetSize());
 }
 
 void DrawClient::EndDraw() {
@@ -68,14 +68,14 @@ void DrawClient::EndDraw() {
     }
     canvas_.EndDraw(uid_, sequence_id_);
 
-    PacketHeader header(PacketType_EndDraw, sizeof(EndDrawPayload));
-
     flatbuffers::FlatBufferBuilder builder;
     auto payload = CreateEndDrawPayload(builder, uid_, sequence_id_);
-    auto packet = CreatePacket(builder, &header, Payload_EndDrawPayload, payload.Union());
-    builder.Finish(packet);
+    auto packet_payload = CreatePacketPayload(builder, Payload_EndDrawPayload, payload.Union());
+    builder.Finish(packet_payload);
 
-    socket_->Send(builder.GetBufferPointer(), builder.GetSize());
+    PacketHeader header(PacketType_EndDraw, sizeof(builder.GetSize()));
+
+    SendPacket(&header, builder.GetBufferPointer(), builder.GetSize());
 }
 
 void DrawClient::DrawPoint(Point point) {
@@ -84,14 +84,13 @@ void DrawClient::DrawPoint(Point point) {
     }
     canvas_.DrawPoint(uid_, sequence_id_, point);
 
-    PacketHeader header(PacketType_DrawPoints, sizeof(DrawPointsPayload));
-
     flatbuffers::FlatBufferBuilder builder;
     std::vector<Vec2> points = {Vec2((int16_t)point.x, (int16_t)point.y)};
-    auto points_vector = builder.CreateVectorOfStructs(points);
-    auto payload = CreateDrawPointsPayload(builder, uid_, sequence_id_, points_vector.o);
-    auto packet = CreatePacket(builder, &header, Payload_EndDrawPayload, payload.Union());
-    builder.Finish(packet);
+    auto payload = CreateDrawPointsPayloadDirect(builder, uid_, sequence_id_, &points);
+    auto packet_payload = CreatePacketPayload(builder, Payload_EndDrawPayload, payload.Union());
+    builder.Finish(packet_payload);
+
+    PacketHeader header(PacketType_DrawPoints, builder.GetSize());
 
     socket_->Send(builder.GetBufferPointer(), builder.GetSize());
 }
@@ -102,6 +101,16 @@ void DrawClient::Render(int width, int height) {
 
 const char *DrawClient::GetPixelBuffer() {
     return canvas_.GetPixelBuffer();
+}
+
+void DrawClient::SendPacket(PacketHeader* header, const uint8_t* payload, size_t payload_length) {
+    std::vector<uint8_t> packet_buffer(sizeof(*header) + payload_length);
+
+    size_t header_size = sizeof(*header);
+    memcpy(packet_buffer.data(), header, header_size);
+    memcpy(packet_buffer.data() + header_size, payload, payload_length);
+
+    socket_->Send(packet_buffer.data(), packet_buffer.size());
 }
 
 void DrawClient::onSocketConnected(TcpSocket* socket) {
@@ -115,7 +124,7 @@ void DrawClient::onSocketDisconnected(TcpSocket* socket) {
 }
 
 void DrawClient::onSocketDataArrival(TcpSocket* socket, ReadWriteBuffer* buffer, size_t nread) {
-    ParseBuffer(buffer, std::bind(&DrawClient::onPacketCallback, this, _1, _2));
+    ParseBuffer(buffer, std::bind(&DrawClient::onPacketCallback, this, _1));
 }
 
 void DrawClient::onSocketError(TcpSocket* socket, const std::string& message) {
@@ -123,15 +132,16 @@ void DrawClient::onSocketError(TcpSocket* socket, const std::string& message) {
     socket_connected_ = false;
 }
 
-void DrawClient::onPacketCallback(const Packet* packet, std::vector<uint8_t>&&) {
-    Log::InfoF("onPacketCallback: %s\n", EnumNamesPacketType()[packet->header()->packet_type()]);
-    switch (packet->header()->packet_type()) {
+void DrawClient::onPacketCallback(Packet&& packet) {
+    Log::InfoF("onPacketCallback: %s\n", EnumNamesPacketType()[packet.header.packet_type()]);
+    const PacketPayload* packet_payload = packet.payload;
+    switch (packet.header.packet_type()) {
         case PacketType_ServerHello:
-            uid_ = packet->payload_as<ServerHelloPayload>()->uid();
-            color_ = packet->payload_as<ServerHelloPayload>()->color();
+            uid_ = packet_payload->payload_as<ServerHelloPayload>()->uid();
+            color_ = packet_payload->payload_as<ServerHelloPayload>()->color();
             break;
         case PacketType_FullImage: {
-            auto payload = packet->payload_as<FullImagePayload>();
+            auto payload = packet_payload->payload_as<FullImagePayload>();
             auto batches = payload->batches();
 
             for (auto draw_batch : *batches) {
@@ -148,17 +158,17 @@ void DrawClient::onPacketCallback(const Packet* packet, std::vector<uint8_t>&&) 
             break;
         }
         case PacketType_StartDraw: {
-            auto payload = packet->payload_as<StartDrawPayload>();
+            auto payload = packet_payload->payload_as<StartDrawPayload>();
             canvas_.BeginDraw(payload->uid(), payload->sequence_id(), payload->color());
             break;
         }
         case PacketType_EndDraw: {
-            auto payload = packet->payload_as<EndDrawPayload>();
+            auto payload = packet_payload->payload_as<EndDrawPayload>();
             canvas_.EndDraw(payload->uid(), payload->sequence_id());
             break;
         }
         case PacketType_DrawPoints: {
-            auto payload = packet->payload_as<DrawPointsPayload>();
+            auto payload = packet_payload->payload_as<DrawPointsPayload>();
             auto points_vector = payload->points();
             if (points_vector->size() == 0) {
                 break;
@@ -169,17 +179,17 @@ void DrawClient::onPacketCallback(const Packet* packet, std::vector<uint8_t>&&) 
             break;
         }
         case PacketType_DeleteBatch: {
-            auto payload = packet->payload_as<DeleteBatchPayload>();
+            auto payload = packet_payload->payload_as<DeleteBatchPayload>();
             canvas_.ClearBatch(payload->uid(), payload->sequence_id());
             break;
         }
         case PacketType_UserEnter: {
-            auto payload = packet->payload_as<UserEnterPayload>();
+            auto payload = packet_payload->payload_as<UserEnterPayload>();
             Log::InfoF("User %d entered with color 0x%08x\n", payload->uid(), payload->color());
             break;
         }
         case PacketType_UserLeave: {
-            auto payload = packet->payload_as<UserLeavePayload>();
+            auto payload = packet_payload->payload_as<UserLeavePayload>();
             Log::InfoF("User %d leaved from room\n", payload->uid());
             break;
         }

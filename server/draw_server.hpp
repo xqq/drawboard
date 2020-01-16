@@ -7,9 +7,9 @@
 
 #include <memory>
 #include "common/abstract_canvas.hpp"
+#include "common/blocking_queue.hpp"
 #include "socket/tcp_listener.hpp"
 #include "socket/tcp_socket.hpp"
-#include "common/blocking_queue.hpp"
 #include "transmit_worker.hpp"
 
 class DrawServer {
@@ -19,6 +19,8 @@ public:
     void Start(std::string bind_addr, uint16_t port);
     void Stop();
 private:
+    void ShutdownSockets();
+private:
     void onListenerAccepted(std::unique_ptr<TcpSocket> socket, struct sockaddr_in);
     void onListenerError(const std::string& msg);
     void onClientConnected(TcpSocket* socket);
@@ -26,9 +28,11 @@ private:
     void onClientDataArrival(TcpSocket* socket, ReadWriteBuffer* buffer, size_t nread);
     void onClientError(TcpSocket* socket, const std::string& message);
 private:
+    void PostPacket(TcpSocket* socket, PacketHeader* header, const uint8_t* payload, size_t payload_length);
     void PostServerHello(TcpSocket* socket, uint32_t uid, uint32_t color);
     void PostFullImage(TcpSocket* socket);
-    void BroadcastPacketBuffer(std::vector<uint8_t>&& packet_buffer);
+    void BroadcastPacket(const Packet& packet);
+    void BroadcastPacket(PacketHeader* header, const uint8_t* payload, size_t payload_length);
     void BroadcastUserEnter(uint32_t uid, uint32_t color);
     void BroadcastUserLeave(uint32_t uid);
 private:
