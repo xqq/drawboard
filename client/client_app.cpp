@@ -5,8 +5,10 @@
 #include <iostream>
 #include "client_app.hpp"
 
-constexpr int width = 1280;
-constexpr int height = 720;
+constexpr int viewport_width = 1280;
+constexpr int viewport_height = 720;
+
+ClientApp::ClientApp(std::string host, uint16_t port) : host_(host), port_(port) { }
 
 int ClientApp::Run() {
     if (SDL_Init(SDL_INIT_VIDEO) == -1) {
@@ -14,26 +16,26 @@ int ClientApp::Run() {
         return 1;
     }
 
-    window_ = SDL_CreateWindow("Drawboard", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_SHOWN);
-    if (window_ == nullptr) {
+    SDL_Window* window = SDL_CreateWindow("Drawboard", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, viewport_width, viewport_height, SDL_WINDOW_SHOWN);
+    if (window == nullptr) {
         std::cout << SDL_GetError() << std::endl;
         return 1;
     }
 
     SDL_Renderer *renderer = nullptr;
-    renderer = SDL_CreateRenderer(window_, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if (renderer == nullptr){
         std::cout << SDL_GetError() << std::endl;
         return 1;
     }
 
-    texture_ = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 1280, 720);
+    SDL_Texture* texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, viewport_width, viewport_height);
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 
-    bool left_mouse_down = false;
-    uint32_t sequence_id = 0;
+    client_.Login(host_, port_);
+    client_.InitViewport(viewport_width, viewport_height);
 
-    canvas_.InitPixelBuffer(1280, 720);
+    bool left_mouse_down = false;
 
     while (true) {
         SDL_Event event;
@@ -45,14 +47,13 @@ int ClientApp::Run() {
                 case SDL_MOUSEBUTTONUP:
                     if (event.button.button == SDL_BUTTON_LEFT) {
                         left_mouse_down = false;
-                        canvas_.EndDraw(0, sequence_id);
+                        client_.EndDraw();
                     }
                     break;
                 case SDL_MOUSEBUTTONDOWN:
                     if (event.button.button == SDL_BUTTON_LEFT) {
                         if (!left_mouse_down) {
-                            sequence_id++;
-                            canvas_.BeginDraw(0, sequence_id, 0);
+                            client_.BeginDraw();
                             left_mouse_down = true;
                         }
                     }
@@ -60,24 +61,26 @@ int ClientApp::Run() {
                     if (left_mouse_down) {
                         int mouseX = event.motion.x;
                         int mouseY = event.motion.y;
-                        canvas_.DrawPoint(0, sequence_id, Point(mouseX, mouseY));
+                        client_.DrawPoint(Point(mouseX, mouseY));
                     }
                     break;
             }
         }
 
-        canvas_.Render(1280, 720);
+        client_.Render(viewport_width, viewport_height);
 
-        SDL_UpdateTexture(texture_, NULL, canvas_.GetPixelBuffer(), 1280 * sizeof(uint32_t));
+        SDL_UpdateTexture(texture, NULL, client_.GetPixelBuffer(), 1280 * sizeof(uint32_t));
 
         SDL_RenderClear(renderer);
-        SDL_RenderCopy(renderer, texture_, NULL, NULL);
+        SDL_RenderCopy(renderer, texture, NULL, NULL);
         SDL_RenderPresent(renderer);
     }
 
-    SDL_DestroyTexture(texture_);
+    client_.Logout();
+
+    SDL_DestroyTexture(texture);
     SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window_);
+    SDL_DestroyWindow(window);
     SDL_Quit();
     return 0;
 }

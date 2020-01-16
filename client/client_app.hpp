@@ -5,17 +5,20 @@
 #ifndef DRAWBOARD_CLIENT_APP_HPP
 #define DRAWBOARD_CLIENT_APP_HPP
 
+#include <cstdint>
+#include <string>
 #include "common/abstract_canvas.hpp"
+#include "client/draw_client.hpp"
 #include "sdl_include.hpp"
 
 class ClientApp {
 public:
+    ClientApp(std::string host, uint16_t port);
     int Run();
 private:
-    SDL_Window* window_ = nullptr;
-    SDL_Surface* screen_ = nullptr;
-    SDL_Texture* texture_ = nullptr;
-    AbstractCanvas canvas_;
+    std::string host_;
+    uint16_t port_;
+    DrawClient client_;
 };
 
 
