@@ -7,6 +7,10 @@
 #include "client/client_app.hpp"
 #include "server/draw_server.hpp"
 
+#ifdef main
+    #undef main
+#endif
+
 int main(int argc, char* argv[]) {
     argh::parser cmdl(argc, argv, argh::parser::PREFER_PARAM_FOR_UNREG_OPTION);
 
