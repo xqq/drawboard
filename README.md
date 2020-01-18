@@ -44,8 +44,16 @@ sudo apt-get install cmake libsdl2-dev
 ```bash
 mkdir build
 cd build
-cmake .. -G "Visual Studio 15" -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=<PATH_TO_VCPKG>\vcpkg\scripts\buildsystems\vcpkg.cmake
-cmake --build
+cmake .. -G "Visual Studio 15" -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=<PATH_TO_VCPKG>/scripts/buildsystems/vcpkg.cmake
+cmake --build .
+```
+
+### MSYS2 Mingw-w64 Build
+```bash
+mkdir build
+cd build
+cmake .. -G "MSYS Makefiles" -DCMAKE_BUILD_TYPE=Release
+make -j8
 ```
 
 ### Other toolchains
