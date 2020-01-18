@@ -87,6 +87,8 @@ bool TcpSocketWinsock::Connect(std::string connect_addr, uint16_t port) {
     memcpy(&remote_addr_, result->ai_addr, sizeof(remote_addr_));
     freeaddrinfo(result);
 
+    on_connect_(this);
+
     thread_ = std::thread(&TcpSocketWinsock::ThreadWorker, this);
 
     return true;
