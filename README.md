@@ -83,6 +83,8 @@ Connect to a drawboard server
 ./drawboard -c 127.0.0.1 -p 1919
 ```
 
+- Press Ctrl+Z can Undo last draw operation
+
 ## License
 ```
 MIT License
