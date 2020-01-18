@@ -9,7 +9,7 @@
 constexpr int viewport_width = 1280;
 constexpr int viewport_height = 720;
 
-ClientApp::ClientApp(std::string host, uint16_t port) : host_(host), port_(port) { }
+ClientApp::ClientApp(const std::string& host, uint16_t port) : host_(host), port_(port) { }
 
 int ClientApp::Run() {
     if (SDL_Init(SDL_INIT_VIDEO) == -1) {
@@ -21,7 +21,12 @@ int ClientApp::Run() {
     title_stream << "Drawboard - Server: " << host_ << ":" << port_;
     std::string title = title_stream.str();
 
-    SDL_Window* window = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, viewport_width, viewport_height, SDL_WINDOW_SHOWN);
+    SDL_Window* window = SDL_CreateWindow(title.c_str(),
+                                          SDL_WINDOWPOS_CENTERED,
+                                          SDL_WINDOWPOS_CENTERED,
+                                          viewport_width,
+                                          viewport_height,
+                                          SDL_WINDOW_SHOWN);
     if (window == nullptr) {
         std::cout << SDL_GetError() << std::endl;
         return 1;
@@ -34,7 +39,11 @@ int ClientApp::Run() {
         return 1;
     }
 
-    SDL_Texture* texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, viewport_width, viewport_height);
+    SDL_Texture* texture = SDL_CreateTexture(renderer,
+                                             SDL_PIXELFORMAT_ARGB8888,
+                                             SDL_TEXTUREACCESS_STREAMING,
+                                             viewport_width,
+                                             viewport_height);
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 
     client_.Login(host_, port_);

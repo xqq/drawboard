@@ -13,7 +13,7 @@
 
 class ClientApp {
 public:
-    ClientApp(std::string host, uint16_t port);
+    ClientApp(const std::string& host, uint16_t port);
     int Run();
 private:
     std::string host_;

@@ -33,8 +33,8 @@ int main(int argc, char* argv[]) {
 
     if (error) {
         printf("Usage: drawboard [OPTIONS]\n" \
-               "    --client <host> --port <port>\n"
-               "    --server <host> --port <port>\n");
+               "       --client <host> --port <port>\n"
+               "       --server <host> --port <port>\n");
         return -1;
     }
 
