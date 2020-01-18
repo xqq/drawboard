@@ -97,20 +97,12 @@ bool TcpListenerWinsock::StartListen(std::string bind_addr, uint16_t port) {
 bool TcpListenerWinsock::EndListen() {
     if (listen_socket_) {
         shutdown_flag_ = true;
-        int ret = shutdown(listen_socket_, SD_BOTH);
-        if (ret == SOCKET_ERROR) {
-            on_error_("shutdown failed");
-            listen_socket_ = 0;
-        }
+        closesocket(listen_socket_);
+        listen_socket_ = 0;
     }
 
     if (thread_.joinable()) {
         thread_.detach();
-    }
-
-    if (listen_socket_) {
-        closesocket(listen_socket_);
-        listen_socket_ = 0;
     }
 
     return true;
