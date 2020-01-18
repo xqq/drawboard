@@ -80,7 +80,8 @@ elseif(MINGW)
     target_link_libraries(drawboard
         PRIVATE
             -Wl,-Bstatic
-            ${SDL2_LIBRARIES}
+            SDL2
+            SDL2main
             -Wl,-Bdynamic
     )
 else()
