@@ -62,17 +62,12 @@ bool TcpListenerPosix::StartListen(std::string bind_addr, uint16_t port) {
 bool TcpListenerPosix::EndListen() {
     if (listen_fd_) {
         shutdown_flag_ = true;
-        shutdown(listen_fd_, SHUT_RDWR);
+        close(listen_fd_);
         listen_fd_ = 0;
     }
 
     if (thread_.joinable()) {
         thread_.detach();
-    }
-
-    if (listen_fd_) {
-        close(listen_fd_);
-        listen_fd_ = 0;
     }
 
     return true;
@@ -86,7 +81,7 @@ void TcpListenerPosix::ThreadWorker() {
         int client_fd = accept(listen_fd_, reinterpret_cast<struct sockaddr*>(&incoming_addr), &incoming_addr_size);
         if (client_fd < 0) {
             // error raised
-            if (errno == EINVAL && shutdown_flag_) {
+            if ((errno == EINVAL || errno == ECONNABORTED) && shutdown_flag_) {
                 break;
             } else {
                 on_error_("accept() failed");
