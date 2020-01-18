@@ -78,7 +78,6 @@ void AbstractCanvas::Render(int width, int height) {
 
     size_t target_size = width * height;
     if (pixel_buffer_.size() != target_size) {
-        pixel_buffer_.resize(target_size);
         InitPixelBuffer(width, height);
     } else {
         ClearPixelBuffer();
@@ -106,6 +105,9 @@ void AbstractCanvas::Render(int width, int height) {
 }
 
 void AbstractCanvas::RenderPoint(Point p, uint32_t color) {
+    if (p.x >= viewport_width_ || p.y >= viewport_height_) {
+        return;
+    }
     size_t addr = p.y * viewport_width_ + p.x;
     pixel_buffer_[addr] = color;
 }
@@ -140,19 +142,20 @@ void AbstractCanvas::RenderLine(Point p1, Point p2, uint32_t color){
 }
 
 void AbstractCanvas::InitPixelBuffer(int width, int height) {
-    Log::InfoF("InitPixelBuffer: width = %d, height = %d\n", width, height);
+    Log::InfoF("[AbstractCanvas] InitPixelBuffer: width = %d, height = %d\n", width, height);
     viewport_width_ = width;
     viewport_height_ = height;
+    is_bitmap_valid_ = false;
     pixel_buffer_.resize(width * height);
     ClearPixelBuffer();
 }
 
 void AbstractCanvas::ClearPixelBuffer() {
-    memset(reinterpret_cast<void*>(&pixel_buffer_[0]), 255, sizeof(uint32_t) * viewport_width_ * viewport_height_);
+    memset(pixel_buffer_.data(), 255, sizeof(uint32_t) * viewport_width_ * viewport_height_);
 }
 
 const char* AbstractCanvas::GetPixelBuffer() {
-    return reinterpret_cast<const char*>(&pixel_buffer_[0]);
+    return reinterpret_cast<const char*>(pixel_buffer_.data());
 }
 
 const PointMap* AbstractCanvas::GetMap() {

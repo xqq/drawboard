@@ -6,12 +6,12 @@
 #include <sstream>
 #include "client_app.hpp"
 
-constexpr int viewport_width = 1280;
-constexpr int viewport_height = 720;
-
 ClientApp::ClientApp(const std::string& host, uint16_t port) : host_(host), port_(port) { }
 
 int ClientApp::Run() {
+    int viewport_width = 1280;
+    int viewport_height = 720;
+
     if (SDL_Init(SDL_INIT_VIDEO) == -1) {
         std::cout << SDL_GetError() << std::endl;
         return 1;
@@ -26,7 +26,7 @@ int ClientApp::Run() {
                                           SDL_WINDOWPOS_CENTERED,
                                           viewport_width,
                                           viewport_height,
-                                          SDL_WINDOW_SHOWN);
+                                          SDL_WINDOW_SHOWN); // SDL_WINDOW_RESIZABLE
     if (window == nullptr) {
         std::cout << SDL_GetError() << std::endl;
         return 1;
@@ -59,15 +59,6 @@ int ClientApp::Run() {
             }
 
             switch (event.type) {
-                case SDL_KEYDOWN:
-                    if (event.key.keysym.sym == SDLK_z) {
-                        const uint8_t* keystates = SDL_GetKeyboardState(nullptr);
-                        if (keystates[SDL_SCANCODE_LCTRL]) {
-                            // Ctrl + Z
-                            client_.UndoLast();
-                        }
-                    }
-                    break;
                 case SDL_MOUSEBUTTONUP:
                     if (event.button.button == SDL_BUTTON_LEFT) {
                         left_mouse_down = false;
@@ -86,6 +77,28 @@ int ClientApp::Run() {
                         int mouseX = event.motion.x;
                         int mouseY = event.motion.y;
                         client_.DrawPoint(Point(mouseX, mouseY));
+                    }
+                    break;
+                case SDL_KEYDOWN:
+                    if (event.key.keysym.sym == SDLK_z) {
+                        const uint8_t* keystates = SDL_GetKeyboardState(nullptr);
+                        if (keystates[SDL_SCANCODE_LCTRL]) {
+                            // Ctrl + Z
+                            client_.UndoLast();
+                        }
+                    }
+                    break;
+                case SDL_WINDOWEVENT:
+                    if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
+                        viewport_width = (event.window.data1 / 2) * 2;
+                        viewport_height = (event.window.data2 / 2) * 2;
+                        SDL_DestroyTexture(texture);
+                        SDL_Texture* texture = SDL_CreateTexture(renderer,
+                                                                 SDL_PIXELFORMAT_ARGB8888,
+                                                                 SDL_TEXTUREACCESS_STREAMING,
+                                                                 viewport_width,
+                                                                 viewport_height);
+                        client_.InitViewport(viewport_width, viewport_height);
                     }
                     break;
             }

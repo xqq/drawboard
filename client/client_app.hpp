@@ -7,7 +7,6 @@
 
 #include <cstdint>
 #include <string>
-#include "common/abstract_canvas.hpp"
 #include "client/draw_client.hpp"
 #include "sdl_include.hpp"
 
