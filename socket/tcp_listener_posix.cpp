@@ -62,11 +62,8 @@ bool TcpListenerPosix::StartListen(std::string bind_addr, uint16_t port) {
 bool TcpListenerPosix::EndListen() {
     if (listen_fd_) {
         shutdown_flag_ = true;
-        int ret = shutdown(listen_fd_, SHUT_RDWR);
-        if (ret == -1) {
-            on_error_("shutdown() returned with error");
-            listen_fd_ = 0;
-        }
+        shutdown(listen_fd_, SHUT_RDWR);
+        listen_fd_ = 0;
     }
 
     if (thread_.joinable()) {
