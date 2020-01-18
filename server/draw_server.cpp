@@ -16,7 +16,7 @@
 using namespace std::placeholders;
 
 DrawServer::DrawServer() : max_uid_(-1) {
-    srand(time(nullptr));
+    srand(static_cast<uint32_t>(time(nullptr)));
     transmit_worker_.SetTaskQueue(task_queue_);
     transmit_worker_.SetSocketCluster(socket_cluster_);
     listener_.reset(TcpListener::Create(std::bind(&DrawServer::onListenerAccepted, this, _1, _2),
@@ -53,7 +53,7 @@ void DrawServer::onListenerAccepted(std::unique_ptr<TcpSocket> socket, struct so
                         std::bind(&DrawServer::onClientDataArrival, this, _1, _2, _3),
                         std::bind(&DrawServer::onClientError, this, _1, _2));
     uint32_t uid = ++max_uid_;
-    socket->SetUserData(reinterpret_cast<void*>(uid));
+    socket->SetUserData(reinterpret_cast<void*>(static_cast<uint64_t>(uid)));
     TcpSocket* socket_ptr = socket.get();
     socket_cluster_.insert({uid, std::move(socket)});
 

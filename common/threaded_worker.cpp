@@ -36,7 +36,7 @@ static void SetThreadName(std::thread::native_handle_type thread_id, const std::
     THREADNAME_INFO info;
     info.dwType = 0x1000;
     info.szName = name.c_str();
-    info.dwThreadID = reinterpret_cast<DWORD>(thread_id);
+    info.dwThreadID = static_cast<DWORD>(reinterpret_cast<uintptr_t>(thread_id));
     info.dwFlags = 0;
 
     __try {
