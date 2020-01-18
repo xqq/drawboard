@@ -32,6 +32,9 @@
 # .idea/*.iml
 # .idea/modules
 
+# Visual Studio
+.vs/
+
 # compile_commands.json
 compile_commands.json
 
