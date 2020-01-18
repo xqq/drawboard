@@ -4,7 +4,7 @@
 
 #include <cstdlib>
 #include <cstring>
-#include <cstdio>
+#include "common/log.hpp"
 #include "read_write_buffer.hpp"
 
 ReadWriteBuffer::ReadWriteBuffer(size_t size) {
@@ -35,7 +35,7 @@ bool ReadWriteBuffer::Write(const uint8_t* buf, size_t length) {
     size_t remain = end_pointer_ - write_pointer_;
 
     if (length > size_) {
-        fprintf(stderr, "ReadWriteBuffer::Write(): space not enough for %zu bytes", length);
+        Log::ErrorF("ReadWriteBuffer::Write(): space not enough for %zu bytes\n", length);
         return false;
     } else if (length > remain) {  // if space is not enough
         // move existing data to the front of buffer
