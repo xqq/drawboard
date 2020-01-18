@@ -9,7 +9,8 @@
 #include "tcp_socket_winsock.hpp"
 #include "read_write_buffer.hpp"
 
-TcpSocketWinsock::TcpSocketWinsock() {
+TcpSocketWinsock::TcpSocketWinsock()
+        : socket_(0), on_connect_(nullptr), on_disconnect_(nullptr), on_arrival_(nullptr), on_error_(nullptr) {
     InitializeWinsock();
 }
 
