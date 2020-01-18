@@ -18,6 +18,8 @@ public:
     size_t GetReadableLength();
     void RollbackReadPointer(size_t length);
 private:
+    void ExpandBuffer(size_t size);
+private:
     size_t size_;
     uint8_t* buffer_;
     uint8_t* read_pointer_;
